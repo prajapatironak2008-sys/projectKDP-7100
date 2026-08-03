@@ -81,10 +81,10 @@ async function checkPythonBackendStatus() {
 let currentUser = null;
 
 const DEFAULT_USERS = {
-  'archit@example.com': {
+  'User@example.com': {
     id: 1,
-    email: 'archit@example.com',
-    name: 'Archit Prajapati',
+    email: 'User@example.com',
+    name: 'User name ',
     role: 'Senior Full Stack Engineer',
     initials: 'AP',
     audits: [

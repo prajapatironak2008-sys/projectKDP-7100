@@ -1,166 +1,226 @@
-#!/usr/bin/env python3
-import hashlib
-import os
+"""
+ResuMind AI - SQLite Database Manager & CRUD Interface
+Handles table initialization, password hashing, user registration,
+resume audit persistence, JD matching history, and mock interview logs.
+"""
+
 import sqlite3
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import parse_qs, urlparse
+import hashlib
+import json
+import os
+from typing import Dict, Any, List, Optional
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "users.db")
-TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
+DB_FILE = os.path.join(os.path.dirname(__file__), "resumind.db")
 
-
-def init_db() -> None:
-    conn = sqlite3.connect(DB_PATH)
-    conn.execute(
-        """
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            created_at TEXT NOT NULL
-        )
-        """
-    )
-    conn.commit()
-    conn.close()
-
+def get_db_connection():
+    conn = sqlite3.connect(DB_FILE)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode("utf-8")).hexdigest()
+    """Hashes password with SHA-256 and salt."""
+    salt = "ResuMind_AI_Secure_Salt_2026"
+    return hashlib.sha256((password + salt).encode('utf-8')).hexdigest()
 
+def init_db():
+    """Creates database tables and inserts default seed data if database is new."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
 
-def create_user(username: str, email: str, password: str) -> bool:
-    conn = sqlite3.connect(DB_PATH)
+    # Load and execute SQL schema
+    schema_path = os.path.join(os.path.dirname(__file__), "db_schema.sql")
+    if os.path.exists(schema_path):
+        with open(schema_path, "r", encoding="utf-8") as f:
+            cursor.executescript(f.read())
+    else:
+        cursor.executescript("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            target_role TEXT DEFAULT 'Software Engineer',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS resumes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            filename TEXT NOT NULL,
+            raw_text TEXT,
+            ats_score INTEGER NOT NULL,
+            target_role TEXT,
+            detected_skills_json TEXT,
+            missing_keywords_json TEXT,
+            ats_checks_json TEXT,
+            bullet_rewrites_json TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS jd_matches (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            resume_id INTEGER,
+            job_title TEXT,
+            jd_text TEXT NOT NULL,
+            match_percentage INTEGER NOT NULL,
+            match_summary TEXT,
+            gap_matrix_json TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS interview_sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            role_focus TEXT NOT NULL,
+            round_type TEXT NOT NULL,
+            difficulty TEXT DEFAULT 'Mid-Level',
+            overall_score TEXT,
+            total_questions INTEGER DEFAULT 3,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+        """)
+
+    conn.commit()
+
+    # Check if seed user exists
+    cursor.execute("SELECT id FROM users WHERE email = ?", ("archit@example.com",))
+    if not cursor.fetchone():
+        seed_user_id = create_user("Archit Prajapati", "archit@example.com", "password123", "Senior Full Stack Engineer")
+        if seed_user_id:
+            save_resume_audit(
+                user_id=seed_user_id,
+                filename="Archit_Prajapati_FullStack_2026.pdf",
+                raw_text="Fullstack Developer Resume sample",
+                ats_score=88,
+                target_role="Senior Full Stack Engineer",
+                detected_skills=["JavaScript", "React.js", "Node.js", "TypeScript", "PostgreSQL"],
+                missing_keywords=["Docker", "Kubernetes", "CI/CD"],
+                ats_checks=[{"type": "pass", "title": "Contact Info", "desc": "Clean format"}],
+                bullet_rewrites=[{"original": "Built APIs", "improved": "Architected RESTful microservices"}]
+            )
+            print("[DB] Default seed user and sample resume saved to SQLite database successfully!")
+
+    conn.close()
+
+# USER OPERATIONS
+def create_user(name: str, email: str, password: str, role: str = "Software Engineer") -> Optional[int]:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    pwd_hash = hash_password(password)
     try:
-        conn.execute(
-            "INSERT INTO users (username, email, password, created_at) VALUES (?, ?, ?, datetime('now'))",
-            (username, email, hash_password(password)),
+        cursor.execute(
+            "INSERT INTO users (name, email, password_hash, target_role) VALUES (?, ?, ?, ?)",
+            (name, email.lower().strip(), pwd_hash, role)
         )
         conn.commit()
-        return True
+        user_id = cursor.lastrowid
+        return user_id
     except sqlite3.IntegrityError:
-        return False
+        return None  # Email already exists
     finally:
         conn.close()
 
+def authenticate_user(email: str, password: str) -> Optional[Dict[str, Any]]:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    pwd_hash = hash_password(password)
+    cursor.execute(
+        "SELECT id, name, email, target_role, created_at FROM users WHERE email = ? AND password_hash = ?",
+        (email.lower().strip(), pwd_hash)
+    )
+    user = cursor.fetchone()
+    conn.close()
+    if user:
+        return dict(user)
+    return None
 
-def verify_login(username_or_email: str, password: str):
-    conn = sqlite3.connect(DB_PATH)
-    try:
-        return conn.execute(
-            "SELECT id, username FROM users WHERE (username = ? OR email = ?) AND password = ?",
-            (username_or_email, username_or_email, hash_password(password)),
-        ).fetchone()
-    finally:
-        conn.close()
+def get_user_by_email(email: str) -> Optional[Dict[str, Any]]:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT id, name, email, target_role, created_at FROM users WHERE email = ?",
+        (email.lower().strip(),)
+    )
+    user = cursor.fetchone()
+    conn.close()
+    if user:
+        return dict(user)
+    return None
 
+# RESUME AUDIT OPERATIONS
+def save_resume_audit(user_id: int, filename: str, raw_text: str, ats_score: int, target_role: str,
+                      detected_skills: List[str] = None, missing_keywords: List[str] = None,
+                      ats_checks: List[Dict] = None, bullet_rewrites: List[Dict] = None) -> int:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        INSERT INTO resumes (
+            user_id, filename, raw_text, ats_score, target_role,
+            detected_skills_json, missing_keywords_json, ats_checks_json, bullet_rewrites_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        user_id, filename, raw_text, ats_score, target_role,
+        json.dumps(detected_skills or []),
+        json.dumps(missing_keywords or []),
+        json.dumps(ats_checks or []),
+        json.dumps(bullet_rewrites or [])
+    ))
+    
+    conn.commit()
+    resume_id = cursor.lastrowid
+    conn.close()
+    return resume_id
 
-def read_template(name: str, **kwargs) -> str:
-    path = os.path.join(TEMPLATES_DIR, name)
-    with open(path, encoding="utf-8") as handle:
-        content = handle.read()
+def get_user_resumes(user_id: int) -> List[Dict[str, Any]]:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id, filename, ats_score, target_role, detected_skills_json, missing_keywords_json, created_at
+        FROM resumes WHERE user_id = ? ORDER BY created_at DESC
+    """, (user_id,))
+    rows = cursor.fetchall()
+    conn.close()
+    
+    results = []
+    for r in rows:
+        item = dict(r)
+        item['detected_skills'] = json.loads(item.pop('detected_skills_json') or '[]')
+        item['missing_keywords'] = json.loads(item.pop('missing_keywords_json') or '[]')
+        results.append(item)
+    return results
 
-    for key, value in kwargs.items():
-        content = content.replace("{{" + key + "}}", str(value))
+# JOB DESCRIPTION MATCH OPERATIONS
+def save_jd_match(user_id: int, jd_text: str, match_percentage: int, match_summary: str,
+                  gap_matrix: List[Dict], job_title: str = "Target Position", resume_id: int = None) -> int:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO jd_matches (user_id, resume_id, job_title, jd_text, match_percentage, match_summary, gap_matrix_json)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (
+        user_id, resume_id, job_title, jd_text, match_percentage, match_summary, json.dumps(gap_matrix or [])
+    ))
+    conn.commit()
+    match_id = cursor.lastrowid
+    conn.close()
+    return match_id
 
-    return content
+# INTERVIEW SESSION OPERATIONS
+def save_interview_session(user_id: int, role_focus: str, round_type: str, difficulty: str, overall_score: str) -> int:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO interview_sessions (user_id, role_focus, round_type, difficulty, overall_score)
+        VALUES (?, ?, ?, ?, ?)
+    """, (user_id, role_focus, round_type, difficulty, overall_score))
+    conn.commit()
+    session_id = cursor.lastrowid
+    conn.close()
+    return session_id
 
-
-class AuthHandler(BaseHTTPRequestHandler):
-    def do_GET(self) -> None:  # noqa: N802
-        parsed = urlparse(self.path)
-        path = parsed.path
-
-        if path == "/":
-            self.send_html(read_template("login.html", message="", message_class=""))
-        elif path == "/signup":
-            self.send_html(read_template("signup.html", message="", message_class=""))
-        elif path == "/login":
-            self.send_html(read_template("login.html", message="", message_class=""))
-        elif path == "/dashboard":
-            cookie = self.headers.get("Cookie", "")
-            user_id = None
-            username = None
-            for part in cookie.split(";"):
-                if "user_id=" in part:
-                    user_id = part.split("=", 1)[1]
-                if "username=" in part:
-                    username = part.split("=", 1)[1]
-
-            if user_id and username:
-                self.send_html(read_template("dashboard.html", username=username))
-            else:
-                self.redirect("/login")
-        elif path == "/logout":
-            self.send_response(303)
-            self.send_header("Location", "/login")
-            self.send_header("Set-Cookie", "user_id=; Max-Age=0; Path=/")
-            self.send_header("Set-Cookie", "username=; Max-Age=0; Path=/")
-            self.end_headers()
-        else:
-            self.send_response(404)
-            self.end_headers()
-            self.wfile.write(b"Not found")
-
-    def do_POST(self) -> None:  # noqa: N802
-        parsed = urlparse(self.path)
-        path = parsed.path
-        content_length = int(self.headers.get("Content-Length", "0"))
-        body = self.rfile.read(content_length).decode("utf-8")
-        data = {key: values[0] for key, values in parse_qs(body, keep_blank_values=True).items()}
-
-        if path == "/signup":
-            username = data.get("username", "").strip()
-            email = data.get("email", "").strip()
-            password = data.get("password", "").strip()
-
-            if not username or not email or not password:
-                self.send_html(read_template("signup.html", message="Please fill in all fields.", message_class="error"))
-                return
-
-            if create_user(username, email, password):
-                self.send_html(read_template("login.html", message="Account created successfully. Please log in.", message_class="success"))
-            else:
-                self.send_html(read_template("signup.html", message="That username or email already exists.", message_class="error"))
-
-        elif path == "/login":
-            username_or_email = data.get("username_or_email", "").strip()
-            password = data.get("password", "").strip()
-
-            if not username_or_email or not password:
-                self.send_html(read_template("login.html", message="Please enter both values.", message_class="error"))
-                return
-
-            user = verify_login(username_or_email, password)
-            if user:
-                self.send_response(303)
-                self.send_header("Location", "/dashboard")
-                self.send_header("Set-Cookie", f"user_id={user[0]}; Path=/; HttpOnly")
-                self.send_header("Set-Cookie", f"username={user[1]}; Path=/; HttpOnly")
-                self.end_headers()
-            else:
-                self.send_html(read_template("login.html", message="Invalid credentials. Try again.", message_class="error"))
-
-        else:
-            self.send_response(404)
-            self.end_headers()
-
-    def send_html(self, html: str) -> None:
-        self.send_response(200)
-        self.send_header("Content-type", "text/html; charset=utf-8")
-        self.end_headers()
-        self.wfile.write(html.encode("utf-8"))
-
-    def redirect(self, location: str) -> None:
-        self.send_response(303)
-        self.send_header("Location", location)
-        self.end_headers()
-
-
-if __name__ == "__main__":
-    init_db()
-    server = ThreadingHTTPServer(("0.0.0.0", 8000), AuthHandler)
-    print("Auth server running at http://127.0.0.1:8000")
-    server.serve_forever()
+init_db()

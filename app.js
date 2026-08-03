@@ -114,11 +114,189 @@ function initAuth() {
 
   if (savedUserEmail && usersDb[savedUserEmail]) {
     currentUser = usersDb[savedUserEmail];
+    showAppPortal(true);
   } else {
-    currentUser = usersDb['archit@example.com'];
+    showAppPortal(false);
+  }
+}
+
+function showAppPortal(show) {
+  const landingView = document.getElementById('authLandingView');
+  const mainPortal = document.getElementById('mainAppPortal');
+  
+  if (show) {
+    if (landingView) landingView.classList.add('hidden');
+    if (mainPortal) mainPortal.classList.remove('hidden');
+    updateUserUI();
+  } else {
+    if (landingView) landingView.classList.remove('hidden');
+    if (mainPortal) mainPortal.classList.add('hidden');
+  }
+}
+
+function switchAuthPageView(tab) {
+  const loginForm = document.getElementById('pageLoginForm');
+  const regForm = document.getElementById('pageRegisterForm');
+  const tabLogin = document.getElementById('pageTabLogin');
+  const tabReg = document.getElementById('pageTabRegister');
+
+  if (tab === 'login') {
+    if (loginForm) loginForm.classList.remove('hidden');
+    if (regForm) regForm.classList.add('hidden');
+    if (tabLogin) tabLogin.classList.add('active');
+    if (tabReg) tabReg.classList.remove('active');
+  } else {
+    if (loginForm) loginForm.classList.add('hidden');
+    if (regForm) regForm.classList.remove('hidden');
+    if (tabReg) tabReg.classList.add('active');
+    if (tabLogin) tabLogin.classList.remove('active');
+  }
+}
+
+async function handlePageLoginSubmit(e) {
+  e.preventDefault();
+  const email = document.getElementById('pLoginEmail').value.trim().toLowerCase();
+  const password = document.getElementById('pLoginPassword').value;
+  await loginWithCredentials(email, password);
+}
+
+async function handlePageRegisterSubmit(e) {
+  e.preventDefault();
+  const name = document.getElementById('pRegName').value.trim();
+  const email = document.getElementById('pRegEmail').value.trim().toLowerCase();
+  const password = document.getElementById('pRegPassword').value;
+  const role = document.getElementById('pRegRole').value;
+  await registerWithCredentials(name, email, password, role);
+}
+
+async function loginWithCredentials(email, password) {
+  const submitBtn = document.getElementById('pLoginSubmitBtn');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Authenticating...';
   }
 
-  updateUserUI();
+  // Try Python Backend Login if server is active
+  if (isBackendOnline) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        currentUser = {
+          id: data.user.id,
+          email: data.user.email,
+          name: data.user.name,
+          role: data.user.target_role,
+          initials: data.user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase(),
+          audits: []
+        };
+        localStorage.setItem('RESUMIND_CURRENT_USER', email);
+        showAppPortal(true);
+        alert(`🎉 Logged in successfully! Welcome, ${currentUser.name}.`);
+        return;
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(`Authentication failed: ${err.detail || 'Invalid email or password.'}`);
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sign In to Account';
+        }
+        return;
+      }
+    } catch (e) {
+      console.warn("Backend auth failed, using local database fallback");
+    }
+  }
+
+  // Local storage fallback
+  const usersDb = JSON.parse(localStorage.getItem('RESUMIND_USERS') || '{}');
+  if (usersDb[email]) {
+    currentUser = usersDb[email];
+    localStorage.setItem('RESUMIND_CURRENT_USER', email);
+    showAppPortal(true);
+    alert(`🎉 Welcome back, ${currentUser.name}! Signed in successfully.`);
+  } else {
+    // If not found, let's create a dynamic demo user session
+    const namePart = email.split('@')[0];
+    const newName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+    quickLogin(email, newName, 'Software Developer');
+  }
+
+  if (submitBtn) {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sign In to Account';
+  }
+}
+
+async function registerWithCredentials(name, email, password, role) {
+  const submitBtn = document.getElementById('pRegisterSubmitBtn');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating Account...';
+  }
+
+  const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'US';
+
+  // Sync with Python SQLite Database if available
+  if (isBackendOnline) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password, role })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        currentUser = {
+          id: data.user.id,
+          email: data.user.email,
+          name: data.user.name,
+          role: data.user.target_role,
+          initials: initials,
+          audits: []
+        };
+        localStorage.setItem('RESUMIND_CURRENT_USER', email);
+        showAppPortal(true);
+        alert(`✨ Account created in SQLite DB! Welcome, ${name}.`);
+        return;
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(`Registration failed: ${err.detail || 'Could not create account.'}`);
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Create Account & Save to Database';
+        }
+        return;
+      }
+    } catch (e) {
+      console.warn('Backend registration failed, saving locally');
+    }
+  }
+
+  // Save to Local DB & IndexedDB
+  const usersDb = JSON.parse(localStorage.getItem('RESUMIND_USERS') || '{}');
+  usersDb[email] = { id: Date.now(), email, name, role, initials, audits: [] };
+  localStorage.setItem('RESUMIND_USERS', JSON.stringify(usersDb));
+  localStorage.setItem('RESUMIND_CURRENT_USER', email);
+  currentUser = usersDb[email];
+
+  // Save to IndexedDB
+  if (dbInstance) {
+    const tx = dbInstance.transaction('users', 'readwrite');
+    tx.objectStore('users').put(currentUser);
+  }
+
+  showAppPortal(true);
+  alert(`✨ Account created successfully! Welcome, ${name}.`);
+
+  if (submitBtn) {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Create Account & Save to Database';
+  }
 }
 
 function updateUserUI() {
@@ -189,15 +367,15 @@ function switchAuthTab(tab) {
   const tabReg = document.getElementById('tabBtnRegister');
 
   if (tab === 'login') {
-    loginForm.classList.remove('hidden');
-    regForm.classList.add('hidden');
-    tabLogin.classList.add('active');
-    tabReg.classList.remove('active');
+    if (loginForm) loginForm.classList.remove('hidden');
+    if (regForm) regForm.classList.add('hidden');
+    if (tabLogin) tabLogin.classList.add('active');
+    if (tabReg) tabReg.classList.remove('active');
   } else {
-    loginForm.classList.add('hidden');
-    regForm.classList.remove('hidden');
-    tabReg.classList.add('active');
-    tabLogin.classList.remove('active');
+    if (loginForm) loginForm.classList.add('hidden');
+    if (regForm) regForm.classList.remove('hidden');
+    if (tabReg) tabReg.classList.add('active');
+    if (tabLogin) tabLogin.classList.remove('active');
   }
 }
 
@@ -205,49 +383,8 @@ async function handleLoginSubmit(e) {
   e.preventDefault();
   const email = document.getElementById('loginEmail').value.trim().toLowerCase();
   const password = document.getElementById('loginPassword').value;
-
-  // Try Python Backend Login if server is active
-  if (isBackendOnline) {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        currentUser = {
-          id: data.user.id,
-          email: data.user.email,
-          name: data.user.name,
-          role: data.user.target_role,
-          initials: data.user.name.split(' ').map(n => n[0]).join('').slice(0, 2),
-          audits: []
-        };
-        localStorage.setItem('RESUMIND_CURRENT_USER', email);
-        updateUserUI();
-        toggleAuthModal(false);
-        alert(`🎉 Logged into SQLite Database! Welcome, ${currentUser.name}.`);
-        return;
-      }
-    } catch (e) {
-      console.warn("Backend auth failed, using local database");
-    }
-  }
-
-  // Local storage fallback
-  const usersDb = JSON.parse(localStorage.getItem('RESUMIND_USERS') || '{}');
-  if (usersDb[email]) {
-    currentUser = usersDb[email];
-    localStorage.setItem('RESUMIND_CURRENT_USER', email);
-    updateUserUI();
-    toggleAuthModal(false);
-    alert(`🎉 Welcome back, ${currentUser.name}! Signed in successfully.`);
-  } else {
-    const namePart = email.split('@')[0];
-    const newName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
-    quickLogin(email, newName, 'Software Developer');
-  }
+  await loginWithCredentials(email, password);
+  toggleAuthModal(false);
 }
 
 async function handleRegisterSubmit(e) {
@@ -256,42 +393,8 @@ async function handleRegisterSubmit(e) {
   const email = document.getElementById('regEmail').value.trim().toLowerCase();
   const password = document.getElementById('regPassword').value;
   const role = document.getElementById('regRole').value;
-
-  const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'US';
-
-  // Sync with Python SQLite Database if available
-  if (isBackendOnline) {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, role })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        console.log('Registered in SQLite DB:', data);
-      }
-    } catch (e) {
-      console.warn('Backend reg error:', e);
-    }
-  }
-
-  // Save to Local DB & IndexedDB
-  const usersDb = JSON.parse(localStorage.getItem('RESUMIND_USERS') || '{}');
-  usersDb[email] = { id: Date.now(), email, name, role, initials, audits: [] };
-  localStorage.setItem('RESUMIND_USERS', JSON.stringify(usersDb));
-  localStorage.setItem('RESUMIND_CURRENT_USER', email);
-  currentUser = usersDb[email];
-
-  // Save to IndexedDB
-  if (dbInstance) {
-    const tx = dbInstance.transaction('users', 'readwrite');
-    tx.objectStore('users').put(currentUser);
-  }
-
-  updateUserUI();
+  await registerWithCredentials(name, email, password, role);
   toggleAuthModal(false);
-  alert(`✨ Account created & saved to database! Welcome, ${name}.`);
 }
 
 function quickLogin(email, name, role) {
@@ -306,24 +409,17 @@ function quickLogin(email, name, role) {
   currentUser = usersDb[email];
   localStorage.setItem('RESUMIND_CURRENT_USER', email);
 
-  updateUserUI();
-  toggleAuthModal(false);
+  showAppPortal(true);
   alert(`⚡ Quick signed in as ${name}!`);
 }
 
 function logoutUser() {
   localStorage.removeItem('RESUMIND_CURRENT_USER');
-  currentUser = {
-    id: 0,
-    email: 'guest@example.com',
-    name: 'Guest User',
-    role: 'Job Seeker',
-    initials: 'GU',
-    audits: []
-  };
-  updateUserUI();
+  currentUser = null;
+  showAppPortal(false);
   alert('Signed out successfully.');
 }
+
 
 function saveUserAuditRecord(fileName, role, score) {
   if (!currentUser || currentUser.email === 'guest@example.com') return;

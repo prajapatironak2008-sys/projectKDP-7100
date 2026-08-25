@@ -609,7 +609,7 @@ body.dark-theme {
 
 .progress-bg {
   height: 8px;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(245, 238, 238, 0.537);
   border-radius: 10px;
   overflow: hidden;
 }

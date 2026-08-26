@@ -953,7 +953,7 @@ async function runResumeAnalysis(fileName = 'Custom_Resume.pdf') {
       })
     });
 
-    if (!res.ok) {
+    if (!res.OK) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.detail || 'Backend AI Analysis failed');
     }

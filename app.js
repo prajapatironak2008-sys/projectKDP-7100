@@ -18,7 +18,9 @@ document.addEventListener('DOMContentLoaded', () => {
    1. ENTERPRISE INDEXEDDB BROWSER DATABASE ENGINE
    -------------------------------------------------------------------------- */
 let dbInstance = null;
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = (window.location.protocol.startsWith('http') && !window.location.origin.startsWith('null'))
+  ? window.location.origin
+  : 'http://localhost:8000';
 let isBackendOnline = false;
 
 function initBrowserIndexedDB() {
@@ -26,7 +28,7 @@ function initBrowserIndexedDB() {
 
   request.onupgradeneeded = (e) => {
     const db = e.target.result;
-
+    
     if (!db.objectStoreNames.contains('users')) {
       const userStore = db.createObjectStore('users', { keyPath: 'email' });
       userStore.createIndex('id', 'id', { unique: false });
@@ -60,12 +62,15 @@ function initBrowserIndexedDB() {
 
 async function checkPythonBackendStatus() {
   try {
-    const res = await fetch(`${API_BASE_URL}/`, { method: 'GET' }).catch(() => null);
+    let res = await fetch(`${API_BASE_URL}/api/status`, { method: 'GET' }).catch(() => null);
+    if (!res || !res.ok) {
+      res = await fetch(`${API_BASE_URL}/`, { method: 'GET' }).catch(() => null);
+    }
     if (res && res.ok) {
       isBackendOnline = true;
-      const data = await res.json();
-      console.log('🐍 Python SQLite Backend Connected:', data.database);
-      updateAiStatusUI(data.backend_ai === "Active");
+      const data = await res.json().catch(() => ({ database: "SQLite", backend_ai: "Active", status: "online" }));
+      console.log('🐍 Python SQLite Backend Connected:', data.database || 'Connected');
+      updateAiStatusUI(data.backend_ai === "Active" || data.status === "online");
 
       // Sync profile history if logged in
       const savedUserEmail = localStorage.getItem('RESUMIND_CURRENT_USER');
@@ -113,7 +118,7 @@ const DEFAULT_USERS = {
     role: 'Senior Full Stack Engineer',
     initials: 'AP',
     audits: [
-      { id: 101, name: 'User_Name_FullStack_2026.pdf', role: 'Senior Full Stack Engineer', score: 88, time: '2 hours ago' },
+      { id: 101, name: 'Archit_Prajapati_FullStack_2026.pdf', role: 'Senior Full Stack Engineer', score: 88, time: '2 hours ago' },
       { id: 102, name: 'Backend_Node_Developer_v2.docx', role: 'Node.js Backend Lead', score: 74, time: 'Yesterday' }
     ],
     jd_matches: [
@@ -162,7 +167,7 @@ function initAuth() {
 function showAppPortal(show) {
   const landingView = document.getElementById('authLandingView');
   const mainPortal = document.getElementById('mainAppPortal');
-
+  
   if (show) {
     if (landingView) landingView.classList.add('hidden');
     if (mainPortal) mainPortal.classList.remove('hidden');
@@ -390,7 +395,7 @@ function updateUserUI() {
   // --------------------------------------------------------------------------
   // DYNAMIC DASHBOARD METRICS CALCULATION (OUT OF 10)
   // --------------------------------------------------------------------------
-
+  
   // 1. Avg ATS Score
   let avgAts = 0;
   if (currentUser.audits && currentUser.audits.length > 0) {
@@ -431,7 +436,7 @@ function updateUserUI() {
     });
     if (count > 0) avgInterviewScore = sum / count;
   }
-
+  
   const mockScoreTrend = document.querySelector('#dashInterviewCount + .trend');
   if (mockScoreTrend) {
     mockScoreTrend.innerHTML = `<i class="fa-solid fa-star text-amber"></i> Avg: ${avgInterviewScore.toFixed(1)}/10`;
@@ -620,64 +625,13 @@ function saveUserAuditRecord(fileName, role, score) {
 function saveUserJdMatchRecord(jobTitle, matchPercentage, matchSummary, gapMatrix) {
   if (!currentUser) return;
 
-  HEAD
-  if (!apiKey) {
-    throw new Error('NO_API_KEY');
-  }
-
-  if (provider === 'gemini') {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-    const payload = {
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: `${systemInstruction}\n\n${prompt}` }]
-        }
-      ]
-    };
-
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    if (!res.ok) {
-      const errData = await res.json().catch(() => ({}));
-      throw new Error(errData.error?.message || `Gemini API Error: ${res.status}`);
-    }
-
-    const data = await res.json();
-    const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!replyText) throw new Error("Empty response from Gemini API");
-    return replyText;
-  }
-
-  const endpoint = provider === 'groq'
-    ? 'https://api.groq.com/openai/v1/chat/completions'
-    : 'https://api.openai.com/v1/chat/completions';
-
-  const payload = {
-    model: model,
-    messages: [
-      { role: 'system', content: systemInstruction },
-      { role: 'user', content: prompt }
-    ],
-    temperature: 0.7
-    _const ; newRecord = {
-      job_title: jobTitle,
-      match_percentage: matchPercentage,
-      match_summary: matchSummary,
-      gap_matrix: gapMatrix,
-      created_at: new Date().toISOString()
-    },
-    get const() {
-      return this._const;
-    },
-    set const(value) {
-      this._const = value;
-    },
-;
+  const newRecord = {
+    job_title: jobTitle,
+    match_percentage: matchPercentage,
+    match_summary: matchSummary,
+    gap_matrix: gapMatrix,
+    created_at: new Date().toISOString()
+  };
 
   if (!currentUser.jd_matches) currentUser.jd_matches = [];
   currentUser.jd_matches.unshift(newRecord);
@@ -691,7 +645,6 @@ function saveUserJdMatchRecord(jobTitle, matchPercentage, matchSummary, gapMatri
 
   // Save to IndexedDB
   if (dbInstance) {
-    a
     const tx = dbInstance.transaction('jd_matches', 'readwrite');
     tx.objectStore('jd_matches').add({
       user_email: currentUser.email,
@@ -953,7 +906,7 @@ async function runResumeAnalysis(fileName = 'Custom_Resume.pdf') {
       })
     });
 
-    if (!res.OK) {
+    if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.detail || 'Backend AI Analysis failed');
     }
@@ -961,20 +914,11 @@ async function runResumeAnalysis(fileName = 'Custom_Resume.pdf') {
     const data = await res.json();
     const score = data.ats_score || 88;
     document.getElementById('resumeRoleTag').innerText = `Target: ${data.target_role || 'Candidate'}`;
-...
-=======
-...
->>>>
-
-    document.getElementById('scoreValue').innerText = score;
-
-=======
     document.getElementById('scoreValue').innerText = (score / 10).toFixed(1);
-
->>>>>>> c6ec42f76df21e094f67e5e12cc47ed2879ce4a1
+    
     const dashoffset = 264 - (264 * score / 100);
     document.getElementById('scoreCircleProgress').style.strokeDashoffset = dashoffset;
-
+    
     document.getElementById('scoreHeadline').innerText = data.headline || 'AI Audit Completed!';
     document.getElementById('scoreSubhead').innerText = data.subhead || '';
 
@@ -1154,7 +1098,7 @@ function initMockInterview() {
       const overallStr = `${avg.toFixed(1)}/10`;
       const round = document.getElementById('interviewRoundSelect').value;
       const diff = document.getElementById('interviewDifficultySelect')?.value || 'Mid-Level';
-
+      
       saveUserInterviewRecord(activeRole, round, diff, overallStr);
       alert(`🎉 Mock Interview Round Completed! Overall Score: ${overallStr}`);
       switchTab('dashboard');

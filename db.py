@@ -87,9 +87,9 @@ def init_db():
     conn.commit()
 
     # Check if seed user exists
-    cursor.execute("SELECT id FROM users WHERE email = ?", ("archit@example.com",))
+    cursor.execute("SELECT id FROM users WHERE email = ?", ("User@example.com",))
     if not cursor.fetchone():
-        seed_user_id = create_user("Archit Prajapati", "archit@example.com", "password123", "Senior Full Stack Engineer")
+        seed_user_id = create_user("User Name", "user@example.com", "password123", "Full Stack Engineer")
         if seed_user_id:
             save_resume_audit(
                 user_id=seed_user_id,

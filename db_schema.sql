@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS interview_qa (
 );
 
 -- INDEXES FOR FAST SEARCH & AUDIT RETRIEVAL
-CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users( E-mail id);
 CREATE INDEX IF NOT EXISTS idx_resumes_user_id ON resumes(user_id);
 CREATE INDEX IF NOT EXISTS idx_jd_matches_user_id ON jd_matches(user_id);
 CREATE INDEX IF NOT EXISTS idx_interview_sessions_user_id ON interview_sessions(user_id);

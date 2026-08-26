@@ -54,10 +54,10 @@
 
       <div class="sidebar-card">
         <div class="sparkle-icon"><i class="fa-solid fa-bolt"></i></div>
-        <h4 id="sidebarAiModelText">AI Engine: Sandbox Mode</h4>
-        <p id="sidebarAiProviderText">Click 'AI Settings' to connect key</p>
+        <h4 id="sidebarAiModelText">ResuMind AI Active</h4>
+        <p id="sidebarAiProviderText">Backend AI Engine Connected</p>
         <div class="status-indicator">
-          <span class="dot" id="aiStatusDot"></span> <span id="aiStatusText">Sandbox Mode</span>
+          <span class="dot online" id="aiStatusDot"></span> <span id="aiStatusText">AI Online</span>
         </div>
       </div>
 
@@ -82,17 +82,10 @@
           <input type="text" placeholder="Search saved analyses, interview scenarios, templates...">
         </div>
         <div class="header-actions">
-          <!-- Auth Trigger / Profile Pill -->
-          <div id="authHeaderState">
-            <button class="btn btn-secondary btn-sm" id="openAuthModalBtn" onclick="toggleAuthModal(true)">
-              <i class="fa-solid fa-user-lock"></i> Sign In / Register
-            </button>
-          </div>
+          <!-- Auth Header Pill -->
+          <div id="authHeaderState"></div>
 
-          <!-- Real AI Key Settings Trigger -->
-          <button class="btn btn-secondary btn-sm" id="openApiKeyModalBtn">
-            <i class="fa-solid fa-key text-amber"></i> AI API Settings
-          </button>
+          <!-- Real AI is configured securely on the backend -->
           <button class="btn-icon" title="Notifications"><i class="fa-regular fa-bell"></i></button>
           <button class="btn btn-primary btn-sm" id="quickAnalyzeBtn" onclick="switchTab('analyzer')">
             <i class="fa-solid fa-plus"></i> New Analysis
@@ -171,9 +164,7 @@
                 <h3><i class="fa-solid fa-clock-rotate-left"></i> My Saved Resume Audits</h3>
                 <button class="btn-text" onclick="switchTab('analyzer')">View All</button>
               </div>
-              <div class="audit-list" id="dashboardAuditList">
-                <!-- Dynamically populated per logged in user -->
-              </div>
+              <div class="audit-list" id="dashboardAuditList"></div>
             </div>
 
             <!-- Quick Action Banners -->
@@ -222,6 +213,9 @@
                   <div class="progress-bg">
                     <div class="progress-fill" style="width: 00%;"></div>
                   </div>
+                  <div class="progress-bg">
+                    <div class="progress-fill" style="width: 82%;"></div>
+                  </div>
                 </div>
                 <div class="skill-bar-item">
                   <div class="skill-info">
@@ -254,7 +248,6 @@
         </div>
 
         <div class="analyzer-grid">
-          <!-- Upload & Input Box -->
           <div class="card glass-card upload-section">
             <h3><i class="fa-solid fa-cloud-arrow-up"></i> Upload or Paste Resume</h3>
 
@@ -287,14 +280,12 @@
             </div>
           </div>
 
-          <!-- Live Analysis Results -->
           <div class="card glass-card audit-results-section" id="analysisResults">
             <div class="card-header">
               <h3><i class="fa-solid fa-square-poll-vertical"></i> AI Audit Report</h3>
               <span class="badge badge-purple" id="resumeRoleTag">Target: Senior Software Engineer</span>
             </div>
 
-            <!-- Score gauge header -->
             <div class="score-banner">
               <div class="overall-score-circle">
                 <svg viewBox="0 0 100 100">
@@ -319,7 +310,6 @@
               </div>
             </div>
 
-            <!-- Detailed Tabs inside Analyzer -->
             <div class="report-tabs">
               <button class="report-tab-btn active" data-report="ats">ATS Checks</button>
               <button class="report-tab-btn" data-report="keywords">Keywords Found</button>
@@ -327,7 +317,6 @@
             </div>
 
             <div class="report-content-box">
-              <!-- ATS Checks Subtab -->
               <div id="subtab-ats" class="subtab-content active">
                 <div class="check-list" id="atsCheckList">
                   <div class="check-item status-pass">
@@ -347,7 +336,6 @@
                 </div>
               </div>
 
-              <!-- Keywords Subtab -->
               <div id="subtab-keywords" class="subtab-content">
                 <div class="keyword-cloud-section">
                   <h4>Extracted Core Skills</h4>
@@ -369,7 +357,6 @@
                 </div>
               </div>
 
-              <!-- Bullet Enhancer Subtab -->
               <div id="subtab-bullets" class="subtab-content">
                 <div id="bulletEnhanceContainer">
                   <div class="bullet-rewrite-card">
@@ -484,7 +471,6 @@
         </div>
 
         <div class="interview-container">
-          <!-- Setup Panel -->
           <div class="card glass-card interview-setup" id="interviewSetupCard">
             <h3><i class="fa-solid fa-sliders"></i> Configure Interview Session</h3>
             <div class="form-row mt-3">
@@ -520,7 +506,6 @@
             </button>
           </div>
 
-          <!-- Active Simulator Interface -->
           <div class="interview-stage hidden" id="interviewStage">
             <div class="interviewer-card glass-card">
               <div class="interviewer-header">
@@ -537,7 +522,6 @@
                 </div>
               </div>
 
-              <!-- Question Box -->
               <div class="question-box">
                 <div class="d-flex justify-content-between align-items-center">
                   <span class="q-label" id="qNumberLabel">Question 1 of 3</span>
@@ -552,7 +536,6 @@
                 </div>
               </div>
 
-              <!-- Candidate Answer Input -->
               <div class="answer-section mt-4">
                 <div class="answer-header">
                   <label><i class="fa-solid fa-microphone"></i> Your Response (Speak or Type)</label>
@@ -576,7 +559,6 @@
               </div>
             </div>
 
-            <!-- AI Evaluation Panel -->
             <div class="card glass-card evaluation-panel hidden" id="evaluationPanel">
               <div class="card-header">
                 <h3><i class="fa-solid fa-award"></i> Live AI STAR Feedback</h3>
@@ -627,7 +609,6 @@
         </div>
 
         <div class="builder-layout">
-          <!-- Controls Panel -->
           <div class="card glass-card builder-form">
             <h3><i class="fa-solid fa-pen-to-square"></i> Resume Content Generator</h3>
 
@@ -655,14 +636,13 @@
             </div>
           </div>
 
-          <!-- Live Preview Document -->
           <div class="resume-preview-sheet">
             <div class="resume-document" id="resumePreviewDoc">
               <div class="res-header">
-                <h1 id="pvName">ARCHIT PRAJAPATI</h1>
+                <h1 id="pvName">USER</h1>
                 <p class="res-title" id="pvTitle">SENIOR FULL STACK SOFTWARE ENGINEER</p>
                 <div class="res-contact">
-                  <span><i class="fa-solid fa-envelope"></i> archit@example.com</span> |
+                  <span><i class="fa-solid fa-envelope"></i> USER@example.com</span> |
                   <span><i class="fa-solid fa-phone"></i> +91 98765 43210</span> |
                   <span><i class="fa-brands fa-linkedin"></i> linkedin.com/in/archit</span> |
                   <span><i class="fa-solid fa-location-dot"></i> India</span>

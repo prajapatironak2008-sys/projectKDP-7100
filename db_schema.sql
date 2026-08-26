@@ -49,9 +49,9 @@ CREATE TABLE IF NOT EXISTS interview_sessions (
     user_id INTEGER NOT NULL,
     role_focus TEXT NOT NULL,
     round_type TEXT NOT NULL,
-    difficulty TEXT DEFAULT 'Mid-Level',
+    difficulty TEXT DEFAULT 'Middel-Level',
     overall_score TEXT,
-    total_questions INTEGER DEFAULT 3,
+    total_questions INTEGER DEFAULT 5,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

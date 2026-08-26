@@ -28,7 +28,7 @@ function initBrowserIndexedDB() {
 
   request.onupgradeneeded = (e) => {
     const db = e.target.result;
-    
+
     if (!db.objectStoreNames.contains('users')) {
       const userStore = db.createObjectStore('users', { keyPath: 'email' });
       userStore.createIndex('id', 'id', { unique: false });
@@ -88,7 +88,7 @@ const DEFAULT_USERS = {
     role: 'Senior Full Stack Engineer',
     initials: 'AP',
     audits: [
-      { id: 101, name: 'Archit_Prajapati_FullStack_2026.pdf', role: 'Senior Full Stack Engineer', score: 88, time: '2 hours ago' },
+      { id: 101, name: 'User_Name_FullStack_2026.pdf', role: 'Senior Full Stack Engineer', score: 88, time: '2 hours ago' },
       { id: 102, name: 'Backend_Node_Developer_v2.docx', role: 'Node.js Backend Lead', score: 74, time: 'Yesterday' }
     ]
   },
@@ -413,7 +413,7 @@ async function callRealAI(prompt, systemInstruction = "You are a professional AI
     return replyText;
   }
 
-  const endpoint = provider === 'groq' 
+  const endpoint = provider === 'groq'
     ? 'https://api.groq.com/openai/v1/chat/completions'
     : 'https://api.openai.com/v1/chat/completions';
 
@@ -742,10 +742,10 @@ Return JSON ONLY matching this structure:
     const score = data.ats_score || 88;
     document.getElementById('resumeRoleTag').innerText = `Target: ${data.target_role || 'Candidate'}`;
     document.getElementById('scoreValue').innerText = score;
-    
+
     const dashoffset = 264 - (264 * score / 100);
     document.getElementById('scoreCircleProgress').style.strokeDashoffset = dashoffset;
-    
+
     document.getElementById('scoreHeadline').innerText = data.headline || 'AI Audit Completed!';
     document.getElementById('scoreSubhead').innerText = data.subhead || '';
 

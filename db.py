@@ -95,7 +95,7 @@ def init_db():
                 user_id=seed_user_id,
                 filename="Archit_Prajapati_FullStack_2026.pdf",
                 raw_text="Fullstack Developer Resume sample",
-                ats_score=88,
+                ats_score=0,
                 target_role="Senior Full Stack Engineer",
                 detected_skills=["JavaScript", "React.js", "Node.js", "TypeScript", "PostgreSQL"],
                 missing_keywords=["Docker", "Kubernetes", "CI/CD"],

@@ -97,7 +97,7 @@ class AuthHandler(BaseHTTPRequestHandler):
             self.send_response(303)
             self.send_header("Location", "/login")
             self.send_header("Set-Cookie", "user_id=; Max-Age=0; Path=/")
-            self.send_header("Set-Cookie", "username=; Max-Age=0; Path=/")
+            self.send_header("Set-Cookie", "username=; Max-Age=80; Path=/")
             self.end_headers()
         else:
             self.send_response(404)

@@ -1,15 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ResuMind AI | Smart Resume Analyzer & Interview Portal</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="styles.css">
 </head>
+
 <body class="dark-theme">
 
   <!-- ==========================================================================
@@ -32,7 +36,8 @@
         </div>
 
         <h2 class="auth-hero-title">Smart Resume Analyzer & AI Interview Portal</h2>
-        <p class="auth-hero-subtitle">Optimize your resume for ATS screening, match against target job postings, and practice live mock interview rounds with real-time STAR feedback.</p>
+        <p class="auth-hero-subtitle">Optimize your resume for ATS screening, match against target job postings, and
+          practice live mock interview rounds with real-time STAR feedback.</p>
 
         <div class="feature-bullets">
           <div class="f-item">
@@ -89,7 +94,8 @@
                 <label>Email Address</label>
                 <div class="input-icon-wrapper">
                   <i class="fa-regular fa-envelope input-icon"></i>
-                  <input type="email" id="pLoginEmail" class="form-control ps-icon" placeholder="archit@example.com" required>
+                  <input type="email" id="pLoginEmail" class="form-control ps-icon" placeholder="archit@example.com"
+                    required>
                 </div>
               </div>
 
@@ -97,7 +103,8 @@
                 <label>Password</label>
                 <div class="input-icon-wrapper">
                   <i class="fa-solid fa-lock input-icon"></i>
-                  <input type="password" id="pLoginPassword" class="form-control ps-icon" placeholder="••••••••" required>
+                  <input type="password" id="pLoginPassword" class="form-control ps-icon" placeholder="••••••••"
+                    required>
                 </div>
               </div>
 
@@ -105,7 +112,8 @@
                 <label class="d-flex align-items-center gap-2" style="cursor: pointer;">
                   <input type="checkbox" checked> Remember me
                 </label>
-                <a href="#" class="text-purple" onclick="alert('Password reset link sent to registered email.')">Forgot Password?</a>
+                <a href="#" class="text-purple" onclick="alert('Password reset link sent to registered email.')">Forgot
+                  Password?</a>
               </div>
 
               <button type="submit" class="btn btn-primary w-100 mt-4 btn-lg" id="pLoginSubmitBtn">
@@ -115,10 +123,12 @@
               <div class="or-divider mt-4"><span>OR QUICK ACCESS</span></div>
 
               <div class="demo-login-grid mt-3">
-                <button type="button" class="btn-demo-chip" onclick="quickLogin('archit@example.com', 'Archit Prajapati', 'Senior Full Stack Engineer')">
+                <button type="button" class="btn-demo-chip"
+                  onclick="quickLogin('archit@example.com', 'Archit Prajapati', 'Senior Full Stack Engineer')">
                   <span class="avatar-xs">AP</span> Log in as Archit (Dev)
                 </button>
-                <button type="button" class="btn-demo-chip" onclick="quickLogin('sarah@example.com', 'Sarah Jenkins', 'Data Scientist')">
+                <button type="button" class="btn-demo-chip"
+                  onclick="quickLogin('sarah@example.com', 'Sarah Jenkins', 'Data Scientist')">
                   <span class="avatar-xs">SJ</span> Log in as Sarah (Data)
                 </button>
               </div>
@@ -127,7 +137,8 @@
             <!-- CREATE ACCOUNT FORM -->
             <form id="pageRegisterForm" class="hidden" onsubmit="handlePageRegisterSubmit(event)">
               <h3 class="auth-form-title">Create Free Account</h3>
-              <p class="auth-form-sub">Register to save your resume versions, job matches, and interview logs to the database.</p>
+              <p class="auth-form-sub">Register to save your resume versions, job matches, and interview logs to the
+                database.</p>
 
               <div class="form-group mt-3">
                 <label>Full Name</label>
@@ -141,7 +152,8 @@
                 <label>Email Address</label>
                 <div class="input-icon-wrapper">
                   <i class="fa-regular fa-envelope input-icon"></i>
-                  <input type="email" id="pRegEmail" class="form-control ps-icon" placeholder="archit@example.com" required>
+                  <input type="email" id="pRegEmail" class="form-control ps-icon" placeholder="archit@example.com"
+                    required>
                 </div>
               </div>
 
@@ -153,6 +165,7 @@
                   <option value="Frontend Engineer (React/Next)">Frontend Engineer</option>
                   <option value="Data Scientist / AI Engineer">Data Scientist / AI Specialist</option>
                   <option value="DevOps & Cloud Engineer">DevOps & Cloud Engineer</option>
+                  <option value="AI & Machine Learning">AI & ML</option>
                 </select>
               </div>
 
@@ -160,7 +173,8 @@
                 <label>Password</label>
                 <div class="input-icon-wrapper">
                   <i class="fa-solid fa-lock input-icon"></i>
-                  <input type="password" id="pRegPassword" class="form-control ps-icon" placeholder="Create strong password" required>
+                  <input type="password" id="pRegPassword" class="form-control ps-icon"
+                    placeholder="Create strong password" required>
                 </div>
               </div>
 
@@ -230,7 +244,8 @@
           <span class="name" id="sidebarUserName">Archit Prajapati</span>
           <span class="role" id="sidebarUserRole">Software Engineer</span>
         </div>
-        <button class="btn-icon-xs ms-auto" title="Sign Out" onclick="logoutUser()"><i class="fa-solid fa-right-from-bracket"></i></button>
+        <button class="btn-icon-xs ms-auto" title="Sign Out" onclick="logoutUser()"><i
+            class="fa-solid fa-right-from-bracket"></i></button>
       </div>
     </aside>
 
@@ -262,7 +277,8 @@
             <p class="page-subtitle">Track your resume optimizations, ATS scores, and mock interview performance.</p>
           </div>
           <div class="date-badge" id="aiApiBannerBadge">
-            <i class="fa-solid fa-database"></i> Database: <span class="text-green" id="dbStatusSpan">SQLite Active (`resumind.db`)</span>
+            <i class="fa-solid fa-database"></i> Database: <span class="text-green" id="dbStatusSpan">SQLite Active
+              (`resumind.db`)</span>
           </div>
         </div>
 
@@ -361,26 +377,33 @@
                     <span>Technical Knowledge</span>
                     <span>90%</span>
                   </div>
-                  <div class="progress-bg"><div class="progress-fill" style="width: 90%;"></div></div>
+                  <div class="progress-bg">
+                    <div class="progress-fill" style="width: 90%;"></div>
+                  </div>
                 </div>
                 <div class="skill-bar-item">
                   <div class="skill-info">
                     <span>STAR Method Answer Structure</span>
                     <span>82%</span>
                   </div>
-                  <div class="progress-bg"><div class="progress-fill" style="width: 82%;"></div></div>
+                  <div class="progress-bg">
+                    <div class="progress-fill" style="width: 82%;"></div>
+                  </div>
                 </div>
                 <div class="skill-bar-item">
                   <div class="skill-info">
                     <span>ATS Formatting & Keywords</span>
                     <span>95%</span>
                   </div>
-                  <div class="progress-bg"><div class="progress-fill" style="width: 95%;"></div></div>
+                  <div class="progress-bg">
+                    <div class="progress-fill" style="width: 95%;"></div>
+                  </div>
                 </div>
               </div>
               <div class="ai-tip-box mt-4">
                 <i class="fa-solid fa-database"></i>
-                <p><strong>Database Status:</strong> All your resume audits, mock interview scores, and custom templates are securely saved to your account in SQLite!</p>
+                <p><strong>Database Status:</strong> All your resume audits, mock interview scores, and custom templates
+                  are securely saved to your account in SQLite!</p>
               </div>
             </div>
           </div>
@@ -392,32 +415,35 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">Smart Resume Audit & ATS Breakdown</h1>
-            <p class="page-subtitle">Upload your resume or paste resume text to get real AI scoring, formatting checks, and action verb enhancements.</p>
+            <p class="page-subtitle">Upload your resume or paste resume text to get real AI scoring, formatting checks,
+              and action verb enhancements.</p>
           </div>
         </div>
 
         <div class="analyzer-grid">
           <div class="card glass-card upload-section">
             <h3><i class="fa-solid fa-cloud-arrow-up"></i> Upload or Paste Resume</h3>
-            
+
             <div class="drop-zone" id="dropZone">
               <div class="drop-zone-icon"><i class="fa-solid fa-file-arrow-up"></i></div>
               <h4>Drag & drop your resume file (.txt, .pdf)</h4>
               <p>Supports Text, PDF, or Word</p>
               <div class="or-divider"><span>OR</span></div>
               <input type="file" id="resumeFileInput" hidden accept=".pdf,.docx,.txt">
-              <button class="btn btn-secondary" onclick="document.getElementById('resumeFileInput').click()">Browse Files</button>
+              <button class="btn btn-secondary" onclick="document.getElementById('resumeFileInput').click()">Browse
+                Files</button>
             </div>
 
             <div class="form-group mt-3 text-start">
               <label>Or Paste Raw Resume Text directly:</label>
-              <textarea id="rawResumeTextArea" class="form-textarea" rows="5" placeholder="Paste your full resume text here for real-time AI parsing..."></textarea>
+              <textarea id="rawResumeTextArea" class="form-textarea" rows="5"
+                placeholder="Paste your full resume text here for real-time AI parsing..."></textarea>
             </div>
 
             <button class="btn btn-primary w-100 mt-3" id="analyzeResumeBtn">
               <i class="fa-solid fa-wand-magic-sparkles"></i> Analyze Resume with AI
             </button>
-            
+
             <div class="sample-load-box">
               <span>Or load sample candidate profile:</span>
               <div class="sample-btns">
@@ -437,7 +463,8 @@
               <div class="overall-score-circle">
                 <svg viewBox="0 0 100 100">
                   <circle cx="50" cy="50" r="42" class="bg-circle"></circle>
-                  <circle cx="50" cy="50" r="42" class="score-progress" id="scoreCircleProgress" style="stroke-dashoffset: 40;"></circle>
+                  <circle cx="50" cy="50" r="42" class="score-progress" id="scoreCircleProgress"
+                    style="stroke-dashoffset: 40;"></circle>
                 </svg>
                 <div class="score-text">
                   <span id="scoreValue">88</span>
@@ -446,7 +473,8 @@
               </div>
               <div class="score-summary">
                 <h4 id="scoreHeadline">Excellent ATS Compatibility!</h4>
-                <p id="scoreSubhead">Your resume parses well with standard applicant tracking systems (Greenhouse, Lever, Workday).</p>
+                <p id="scoreSubhead">Your resume parses well with standard applicant tracking systems (Greenhouse,
+                  Lever, Workday).</p>
                 <div class="score-tags" id="scoreTagsBox">
                   <span class="tag tag-pass"><i class="fa-solid fa-check"></i> Clean Layout</span>
                   <span class="tag tag-pass"><i class="fa-solid fa-check"></i> Standard Fonts</span>
@@ -510,8 +538,10 @@
                       <p>"Worked on backend APIs using Node.js and improved application speed."</p>
                     </div>
                     <div class="ai-suggestion-box">
-                      <span class="label-ai"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Re-engineered (STAR Method):</span>
-                      <p class="highlight-text">"Architected and optimized scalable RESTful microservices using Node.js & Express, reducing API response times by 38% for over 100k daily active users."</p>
+                      <span class="label-ai"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Re-engineered (STAR
+                        Method):</span>
+                      <p class="highlight-text">"Architected and optimized scalable RESTful microservices using Node.js
+                        & Express, reducing API response times by 38% for over 100k daily active users."</p>
                       <button class="btn btn-secondary btn-xs" onclick="copyText(this)">Copy Rewritten Bullet</button>
                     </div>
                   </div>
@@ -528,18 +558,21 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">Job Description vs Resume Matcher</h1>
-            <p class="page-subtitle">Compare your resume against a specific target job posting to uncover exact keyword gaps with AI.</p>
+            <p class="page-subtitle">Compare your resume against a specific target job posting to uncover exact keyword
+              gaps with AI.</p>
           </div>
         </div>
 
         <div class="jd-grid">
           <div class="card glass-card">
             <h3><i class="fa-solid fa-file-user"></i> 1. Enter Resume Text</h3>
-            <textarea id="jdResumeTextArea" class="form-textarea" rows="5" placeholder="Paste your resume text here (or leave blank to use analyzed resume)..."></textarea>
+            <textarea id="jdResumeTextArea" class="form-textarea" rows="5"
+              placeholder="Paste your resume text here (or leave blank to use analyzed resume)..."></textarea>
 
             <h3 class="mt-4"><i class="fa-solid fa-align-left"></i> 2. Paste Job Description (JD)</h3>
-            <textarea id="jdTextArea" class="form-textarea" rows="6" placeholder="Paste the target job requirements, responsibilities, and required qualifications here..."></textarea>
-            
+            <textarea id="jdTextArea" class="form-textarea" rows="6"
+              placeholder="Paste the target job requirements, responsibilities, and required qualifications here..."></textarea>
+
             <button class="btn btn-primary w-100 mt-3" id="runJdMatchBtn">
               <i class="fa-solid fa-bolt"></i> Run AI Matcher & Skill Gap Analysis
             </button>
@@ -547,7 +580,7 @@
 
           <div class="card glass-card" id="jdMatchOutput">
             <h3><i class="fa-solid fa-bullseye"></i> Job Match Analysis</h3>
-            
+
             <div class="match-score-header">
               <div class="match-badge">
                 <span class="match-percent" id="matchPercentVal">78%</span>
@@ -555,7 +588,8 @@
               </div>
               <div class="match-summary-text">
                 <h4 id="matchTitle">Moderate-High Alignment</h4>
-                <p id="matchDesc">You meet 8 out of 11 core requirements for this position. Adding specific missing tech terms will put your profile in the shortlisted tier.</p>
+                <p id="matchDesc">You meet 8 out of 11 core requirements for this position. Adding specific missing tech
+                  terms will put your profile in the shortlisted tier.</p>
               </div>
             </div>
 
@@ -591,7 +625,8 @@
 
             <div class="ai-tip-box mt-4">
               <i class="fa-solid fa-lightbulb"></i>
-              <p id="jdMatchProTip"><strong>Pro-Tip:</strong> Tailor your resume summary by weaving key missing job posting terms into your latest project experience.</p>
+              <p id="jdMatchProTip"><strong>Pro-Tip:</strong> Tailor your resume summary by weaving key missing job
+                posting terms into your latest project experience.</p>
             </div>
           </div>
         </div>
@@ -602,7 +637,8 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">AI Mock Interview Simulator</h1>
-            <p class="page-subtitle">Practice interactive tech & behavioral interview rounds with real-time AI evaluation & STAR feedback.</p>
+            <p class="page-subtitle">Practice interactive tech & behavioral interview rounds with real-time AI
+              evaluation & STAR feedback.</p>
           </div>
           <div class="badge badge-purple"><i class="fa-solid fa-brain"></i> Real AI Interview Coach</div>
         </div>
@@ -662,11 +698,14 @@
               <div class="question-box">
                 <div class="d-flex justify-content-between align-items-center">
                   <span class="q-label" id="qNumberLabel">Question 1 of 3</span>
-                  <button class="btn btn-secondary btn-xs" id="genNewAiQuestionBtn" title="Generate New AI Question"><i class="fa-solid fa-arrows-rotate"></i> Generate New Question</button>
+                  <button class="btn btn-secondary btn-xs" id="genNewAiQuestionBtn" title="Generate New AI Question"><i
+                      class="fa-solid fa-arrows-rotate"></i> Generate New Question</button>
                 </div>
-                <h3 id="currentQuestionText">"Can you walk me through a complex architectural challenge you faced when building a Node.js microservice backend, and how you handled high concurrency?"</h3>
+                <h3 id="currentQuestionText">"Can you walk me through a complex architectural challenge you faced when
+                  building a Node.js microservice backend, and how you handled high concurrency?"</h3>
                 <div class="q-hints mt-2">
-                  <span class="hint-tag" id="qHintTag"><i class="fa-solid fa-tag"></i> Key Focus: Bottlenecks, Caching, Event Loop</span>
+                  <span class="hint-tag" id="qHintTag"><i class="fa-solid fa-tag"></i> Key Focus: Bottlenecks, Caching,
+                    Event Loop</span>
                 </div>
               </div>
 
@@ -679,8 +718,9 @@
                   </div>
                 </div>
 
-                <textarea id="candidateAnswerText" class="form-textarea" rows="5" placeholder="Type your answer using the STAR method (Situation, Task, Action, Result)... Or click 'Voice Mic' to speak."></textarea>
-                
+                <textarea id="candidateAnswerText" class="form-textarea" rows="5"
+                  placeholder="Type your answer using the STAR method (Situation, Task, Action, Result)... Or click 'Voice Mic' to speak."></textarea>
+
                 <div class="answer-controls mt-3">
                   <button class="btn btn-secondary" onclick="loadSampleAnswer()">
                     <i class="fa-solid fa-magic"></i> Insert Example Answer
@@ -720,7 +760,8 @@
               </div>
 
               <div class="mt-4 text-end">
-                <button class="btn btn-primary" id="nextQuestionBtn">Next Question <i class="fa-solid fa-chevron-right"></i></button>
+                <button class="btn btn-primary" id="nextQuestionBtn">Next Question <i
+                    class="fa-solid fa-chevron-right"></i></button>
               </div>
             </div>
           </div>
@@ -732,7 +773,8 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">AI Smart Resume Builder</h1>
-            <p class="page-subtitle">Generate tailored, ATS-ready resume layouts powered by real AI bullet point rewriting.</p>
+            <p class="page-subtitle">Generate tailored, ATS-ready resume layouts powered by real AI bullet point
+              rewriting.</p>
           </div>
           <button class="btn btn-primary" onclick="window.print()">
             <i class="fa-solid fa-download"></i> Print / Save PDF
@@ -742,7 +784,7 @@
         <div class="builder-layout">
           <div class="card glass-card builder-form">
             <h3><i class="fa-solid fa-pen-to-square"></i> Resume Content Generator</h3>
-            
+
             <div class="form-group mt-3">
               <label>Target Job Title</label>
               <input type="text" class="form-control" value="Senior Full Stack Software Engineer" id="bRoleInput">
@@ -751,14 +793,19 @@
             <div class="form-group mt-3">
               <label>Professional Summary</label>
               <div class="input-with-ai">
-                <textarea class="form-textarea" rows="3" id="bSummaryInput">Results-driven Full Stack Engineer with 4+ years of experience engineering high-throughput web applications, Node.js microservices, and React frontends.</textarea>
-                <button class="btn-ai-sparkle" title="AI Enhance Summary" id="btnAiEnhanceSummary" onclick="enhanceSummaryWithAI()"><i class="fa-solid fa-wand-magic-sparkles"></i> Real AI Enhance</button>
+                <textarea class="form-textarea" rows="3"
+                  id="bSummaryInput">Results-driven Full Stack Engineer with 4+ years of experience engineering high-throughput web applications, Node.js microservices, and React frontends.</textarea>
+                <button class="btn-ai-sparkle" title="AI Enhance Summary" id="btnAiEnhanceSummary"
+                  onclick="enhanceSummaryWithAI()"><i class="fa-solid fa-wand-magic-sparkles"></i> Real AI
+                  Enhance</button>
               </div>
             </div>
 
             <div class="form-group mt-3">
               <label>Top Skills (Comma Separated)</label>
-              <input type="text" class="form-control" value="JavaScript, TypeScript, React.js, Node.js, Express, PostgreSQL, Docker, AWS, Git" id="bSkillsInput">
+              <input type="text" class="form-control"
+                value="JavaScript, TypeScript, React.js, Node.js, Express, PostgreSQL, Docker, AWS, Git"
+                id="bSkillsInput">
             </div>
           </div>
 
@@ -778,14 +825,18 @@
               <div class="res-section">
                 <h2>PROFESSIONAL SUMMARY</h2>
                 <div class="res-divider"></div>
-                <p id="pvSummary">Results-driven Full Stack Engineer with 4+ years of experience engineering high-throughput web applications, Node.js microservices, and React frontends. Specialized in API optimization, clean architecture, and CI/CD pipelines.</p>
+                <p id="pvSummary">Results-driven Full Stack Engineer with 4+ years of experience engineering
+                  high-throughput web applications, Node.js microservices, and React frontends. Specialized in API
+                  optimization, clean architecture, and CI/CD pipelines.</p>
               </div>
 
               <div class="res-section mt-3">
                 <h2>TECHNICAL SKILLS</h2>
                 <div class="res-divider"></div>
-                <p id="pvSkills"><strong>Languages & Frameworks:</strong> JavaScript (ES6+), TypeScript, React.js, Node.js, Express, Next.js, HTML5/CSS3<br>
-                <strong>Databases & Cloud:</strong> PostgreSQL, MongoDB, Redis, Docker, AWS (S3, EC2), Git</p>
+                <p id="pvSkills"><strong>Languages & Frameworks:</strong> JavaScript (ES6+), TypeScript, React.js,
+                  Node.js, Express, Next.js, HTML5/CSS3<br>
+                  <strong>Databases & Cloud:</strong> PostgreSQL, MongoDB, Redis, Docker, AWS (S3, EC2), Git
+                </p>
               </div>
 
               <div class="res-section mt-3">
@@ -797,9 +848,12 @@
                     <span>2024 – Present</span>
                   </div>
                   <ul>
-                    <li>Architected scalable RESTful microservices using Node.js & Express, reducing API response times by 38% for over 100k daily users.</li>
-                    <li>Engineered 25+ reusable modular UI components using React.js and TypeScript, accelerating frontend dev velocity by 30%.</li>
-                    <li>Streamlined deployment pipelines using Docker and GitHub Actions, cutting staging setup time by 45%.</li>
+                    <li>Architected scalable RESTful microservices using Node.js & Express, reducing API response times
+                      by 38% for over 100k daily users.</li>
+                    <li>Engineered 25+ reusable modular UI components using React.js and TypeScript, accelerating
+                      frontend dev velocity by 30%.</li>
+                    <li>Streamlined deployment pipelines using Docker and GitHub Actions, cutting staging setup time by
+                      45%.</li>
                   </ul>
                 </div>
               </div>
@@ -823,4 +877,5 @@
 
   <script src="app.js"></script>
 </body>
+
 </html>

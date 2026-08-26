@@ -14,184 +14,8 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 
-<body class="dark-theme">
-
-  <!-- ==========================================================================
-       DEDICATED FULL-SCREEN AUTHENTICATION & LANDING PAGE (VISUAL LOGIN / SIGNUP)
-       ========================================================================== -->
-  <div id="authLandingView" class="auth-landing-container">
-    <div class="auth-landing-bg">
-      <div class="glow-sphere sphere-1"></div>
-      <div class="glow-sphere sphere-2"></div>
-    </div>
-
-    <div class="auth-landing-content">
-      <!-- Left Column: Branding & Feature Highlights -->
-      <div class="auth-brand-col">
-        <div class="brand-large">
-          <div class="logo-icon-lg">
-            <i class="fa-solid fa-brain"></i>
-          </div>
-          <h1>ResuMind <span class="badge-ai-lg">AI</span></h1>
-        </div>
-
-        <h2 class="auth-hero-title">Smart Resume Analyzer & AI Interview Portal</h2>
-        <p class="auth-hero-subtitle">Optimize your resume for ATS screening, match against target job postings, and
-          practice live mock interview rounds with real-time STAR feedback.</p>
-
-        <div class="feature-bullets">
-          <div class="f-item">
-            <div class="f-icon purple"><i class="fa-solid fa-file-contract"></i></div>
-            <div>
-              <strong>Instant ATS Resume Audit</strong>
-              <p>Get accurate compatibility scores, keyword density, and bullet point rewrites.</p>
-            </div>
-          </div>
-
-          <div class="f-item">
-            <div class="f-icon blue"><i class="fa-solid fa-headset"></i></div>
-            <div>
-              <strong>AI Mock Interview Coach</strong>
-              <p>Practice technical & behavioral rounds with personalized STAR evaluation.</p>
-            </div>
-          </div>
-
-          <div class="f-item">
-            <div class="f-icon emerald"><i class="fa-solid fa-database"></i></div>
-            <div>
-              <strong>Persistent SQLite Database Storage</strong>
-              <p>Sign in anytime to access your saved resume audits, JD match matrices, and scores.</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="auth-status-chip">
-          <span class="dot online"></span> <strong>Database Engine:</strong> Connected to SQLite Server (`resumind.db`)
-        </div>
-      </div>
-
-      <!-- Right Column: Login / Sign Up Card -->
-      <div class="auth-card-col">
-        <div class="glass-card auth-box">
-          <div class="auth-box-header">
-            <div class="auth-tabs">
-              <button class="auth-tab-btn active" id="pageTabLogin" onclick="switchAuthPageView('login')">
-                <i class="fa-solid fa-right-to-bracket"></i> Sign In
-              </button>
-              <button class="auth-tab-btn" id="pageTabRegister" onclick="switchAuthPageView('register')">
-                <i class="fa-solid fa-user-plus"></i> Create Account
-              </button>
-            </div>
-          </div>
-
-          <div class="auth-box-body mt-4">
-            <!-- SIGN IN FORM -->
-            <form id="pageLoginForm" onsubmit="handlePageLoginSubmit(event)">
-              <h3 class="auth-form-title">Welcome Back!</h3>
-              <p class="auth-form-sub">Sign in with your email and password to access your portal.</p>
-
-              <div class="form-group mt-3">
-                <label>Email Address</label>
-                <div class="input-icon-wrapper">
-                  <i class="fa-regular fa-envelope input-icon"></i>
-                  <input type="email" id="pLoginEmail" class="form-control ps-icon" placeholder="archit@example.com"
-                    required>
-                </div>
-              </div>
-
-              <div class="form-group mt-3">
-                <label>Password</label>
-                <div class="input-icon-wrapper">
-                  <i class="fa-solid fa-lock input-icon"></i>
-                  <input type="password" id="pLoginPassword" class="form-control ps-icon" placeholder="••••••••"
-                    required>
-                </div>
-              </div>
-
-              <div class="d-flex justify-content-between align-items-center mt-3" style="font-size: 0.82rem;">
-                <label class="d-flex align-items-center gap-2" style="cursor: pointer;">
-                  <input type="checkbox" checked> Remember me
-                </label>
-                <a href="#" class="text-purple" onclick="alert('Password reset link sent to registered email.')">Forgot
-                  Password?</a>
-              </div>
-
-              <button type="submit" class="btn btn-primary w-100 mt-4 btn-lg" id="pLoginSubmitBtn">
-                <i class="fa-solid fa-right-to-bracket"></i> Sign In to Account
-              </button>
-
-              <div class="or-divider mt-4"><span>OR QUICK ACCESS</span></div>
-
-              <div class="demo-login-grid mt-3">
-                <button type="button" class="btn-demo-chip"
-                  onclick="quickLogin('archit@example.com', 'Archit Prajapati', 'Senior Full Stack Engineer')">
-                  <span class="avatar-xs">AP</span> Log in as Archit (Dev)
-                </button>
-                <button type="button" class="btn-demo-chip"
-                  onclick="quickLogin('sarah@example.com', 'Sarah Jenkins', 'Data Scientist')">
-                  <span class="avatar-xs">SJ</span> Log in as Sarah (Data)
-                </button>
-              </div>
-            </form>
-
-            <!-- CREATE ACCOUNT FORM -->
-            <form id="pageRegisterForm" class="hidden" onsubmit="handlePageRegisterSubmit(event)">
-              <h3 class="auth-form-title">Create Free Account</h3>
-              <p class="auth-form-sub">Register to save your resume versions, job matches, and interview logs to the
-                database.</p>
-
-              <div class="form-group mt-3">
-                <label>Full Name</label>
-                <div class="input-icon-wrapper">
-                  <i class="fa-regular fa-user input-icon"></i>
-                  <input type="text" id="pRegName" class="form-control ps-icon" placeholder="Archit Prajapati" required>
-                </div>
-              </div>
-
-              <div class="form-group mt-3">
-                <label>Email Address</label>
-                <div class="input-icon-wrapper">
-                  <i class="fa-regular fa-envelope input-icon"></i>
-                  <input type="email" id="pRegEmail" class="form-control ps-icon" placeholder="archit@example.com"
-                    required>
-                </div>
-              </div>
-
-              <div class="form-group mt-3">
-                <label>Target Job Role</label>
-                <select id="pRegRole" class="form-select">
-                  <option value="Senior Full Stack Software Engineer">Senior Full Stack Engineer</option>
-                  <option value="Backend Developer (Node/Python)">Backend Developer</option>
-                  <option value="Frontend Engineer (React/Next)">Frontend Engineer</option>
-                  <option value="Data Scientist / AI Engineer">Data Scientist / AI Specialist</option>
-                  <option value="DevOps & Cloud Engineer">DevOps & Cloud Engineer</option>
-                  <option value="AI & Machine Learning">AI & ML</option>
-                </select>
-              </div>
-
-              <div class="form-group mt-3">
-                <label>Password</label>
-                <div class="input-icon-wrapper">
-                  <i class="fa-solid fa-lock input-icon"></i>
-                  <input type="password" id="pRegPassword" class="form-control ps-icon"
-                    placeholder="Create strong password" required>
-                </div>
-              </div>
-
-              <button type="submit" class="btn btn-primary w-100 mt-4 btn-lg" id="pRegisterSubmitBtn">
-                <i class="fa-solid fa-user-plus"></i> Create Account & Save to Database
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==========================================================================
-       MAIN APPLICATION PORTAL (VISIBLE AFTER USER LOGS IN)
-       ========================================================================== -->
-  <div class="app-container hidden" id="mainAppPortal">
+<body class="light-theme">
+  <div class="app-container">
     <!-- Sidebar Navigation -->
     <aside class="sidebar">
       <div class="brand">
@@ -241,7 +65,7 @@
       <div class="user-profile-sm" id="sidebarUserProfile">
         <div class="avatar" id="sidebarAvatar">AP</div>
         <div class="user-info">
-          <span class="name" id="sidebarUserName">Archit Prajapati</span>
+          <span class="name" id="sidebarUserName"></span>
           <span class="role" id="sidebarUserRole">Software Engineer</span>
         </div>
         <button class="btn-icon-xs ms-auto" title="Sign Out" onclick="logoutUser()"><i
@@ -277,8 +101,8 @@
             <p class="page-subtitle">Track your resume optimizations, ATS scores, and mock interview performance.</p>
           </div>
           <div class="date-badge" id="aiApiBannerBadge">
-            <i class="fa-solid fa-database"></i> Database: <span class="text-green" id="dbStatusSpan">SQLite Active
-              (`resumind.db`)</span>
+            <i class="fa-solid fa-robot"></i> Key Status: <span class="text-amber" id="keyStatusSpan">
+              Configured</span>
           </div>
         </div>
 
@@ -288,8 +112,8 @@
             <div class="stat-details">
               <span class="stat-label">Avg ATS Score</span>
               <div class="stat-value-group">
-                <h3 class="stat-number" id="dashAtsScore">88/100</h3>
-                <span class="trend positive"><i class="fa-solid fa-arrow-trend-up"></i> +14%</span>
+                <h3 class="stat-number" id="dashAtsScore">00/100</h3>
+                <span class="trend positive"><i class="fa-solid fa-arrow-trend-up"></i> +00%</span>
               </div>
               <p class="stat-sub">Top candidate tier</p>
             </div>
@@ -300,8 +124,8 @@
             <div class="stat-details">
               <span class="stat-label">Mock Interviews</span>
               <div class="stat-value-group">
-                <h3 class="stat-number" id="dashInterviewCount">12 Sessions</h3>
-                <span class="trend positive"><i class="fa-solid fa-circle-check"></i> 85% Mastery</span>
+                <h3 class="stat-number" id="dashInterviewCount">00 Sessions</h3>
+                <span class="trend positive"><i class="fa-solid fa-circle-check"></i> 00% Mastery</span>
               </div>
               <p class="stat-sub">Completed with AI feedback</p>
             </div>
@@ -347,7 +171,7 @@
             <div class="action-banner-grid">
               <div class="banner-card gradient-purple" onclick="switchTab('interview')">
                 <div class="banner-text">
-                  <h3>Start AI Mock Interview</h3>
+                  <h3>Start  Interview</h3>
                   <p>Practice live technical & behavioral questions with real-time feedback.</p>
                   <span class="btn-link">Launch Simulator <i class="fa-solid fa-arrow-right"></i></span>
                 </div>
@@ -375,16 +199,19 @@
                 <div class="skill-bar-item">
                   <div class="skill-info">
                     <span>Technical Knowledge</span>
-                    <span>90%</span>
+                    <span>00%</span>
                   </div>
                   <div class="progress-bg">
-                    <div class="progress-fill" style="width: 90%;"></div>
+                    <div class="progress-fill" style="width: 00%;"></div>
                   </div>
                 </div>
                 <div class="skill-bar-item">
                   <div class="skill-info">
                     <span>STAR Method Answer Structure</span>
-                    <span>82%</span>
+                    <span>00%</span>
+                  </div>
+                  <div class="progress-bg">
+                    <div class="progress-fill" style="width: 00%;"></div>
                   </div>
                   <div class="progress-bg">
                     <div class="progress-fill" style="width: 82%;"></div>
@@ -393,17 +220,17 @@
                 <div class="skill-bar-item">
                   <div class="skill-info">
                     <span>ATS Formatting & Keywords</span>
-                    <span>95%</span>
+                    <span>00%</span>
                   </div>
                   <div class="progress-bg">
-                    <div class="progress-fill" style="width: 95%;"></div>
+                    <div class="progress-fill" style="width: 00%;"></div>
                   </div>
                 </div>
               </div>
               <div class="ai-tip-box mt-4">
-                <i class="fa-solid fa-database"></i>
-                <p><strong>Database Status:</strong> All your resume audits, mock interview scores, and custom templates
-                  are securely saved to your account in SQLite!</p>
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <p><strong>AI Recommendation:</strong> Sign in to keep all your resume analyses, mock interview scores,
+                  and custom templates saved under your user account!</p>
               </div>
             </div>
           </div>
@@ -486,7 +313,7 @@
             <div class="report-tabs">
               <button class="report-tab-btn active" data-report="ats">ATS Checks</button>
               <button class="report-tab-btn" data-report="keywords">Keywords Found</button>
-              <button class="report-tab-btn" data-report="bullets">Bullet Point Enhancer</button>
+              <button class="report-tab-btn" data-report="bullets"> Point Enhancer</button>
             </div>
 
             <div class="report-content-box">
@@ -873,7 +700,151 @@
     </main>
   </div>
 
-  <!-- Real AI API Settings modal removed (configured securely on backend) -->
+  <!-- AUTH MODAL (LOGIN & SIGN UP) -->
+  <div class="modal-overlay hidden" id="authModal">
+    <div class="modal-card glass-card auth-modal-card">
+      <div class="modal-header">
+        <div class="auth-tabs">
+          <button class="auth-tab-btn active" id="tabBtnLogin" onclick="switchAuthTab('login')">
+            <i class="fa-solid fa-right-to-bracket"></i> Sign In
+          </button>
+          <button class="auth-tab-btn" id="tabBtnRegister" onclick="switchAuthTab('register')">
+            <i class="fa-solid fa-user-plus"></i> Create Account
+          </button>
+        </div>
+        <button class="modal-close" onclick="toggleAuthModal(false)"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="modal-body mt-3">
+        <!-- SIGN IN FORM -->
+        <form id="loginForm" onsubmit="handleLoginSubmit(event)">
+          <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 14px;">Sign in to access your saved resume
+            audits, interview history, and target JD reports.</p>
+
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="loginEmail" class="form-control" placeholder="archit@example.com" required>
+          </div>
+
+          <div class="form-group mt-3">
+            <label>Password</label>
+            <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" required>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center mt-3" style="font-size: 0.8rem;">
+            <label class="d-flex align-items-center gap-2">
+              <input type="checkbox" checked> Remember me
+            </label>
+            <a href="#" class="text-purple" onclick="alert('Password reset link sent to email.')">Forgot Password?</a>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100 mt-4">
+            <i class="fa-solid fa-right-to-bracket"></i> Sign In to Account
+          </button>
+
+          <div class="demo-auth-box mt-3">
+            <span class="text-dim" style="font-size: 0.75rem; display: block; margin-bottom: 6px;">⚡ Quick Demo
+              One-Click Sign In:</span>
+            <div class="sample-btns">
+              <button type="button" class="btn-chip"
+                onclick="quickLogin('archit@example.com', 'Archit Prajapati', 'Software Engineer')">Archit Prajapati
+                (Dev)</button>
+              <button type="button" class="btn-chip"
+                onclick="quickLogin('sarah@example.com', 'Sarah Jenkins', 'Data Scientist')">Sarah Jenkins
+                (Data)</button>
+            </div>
+          </div>
+        </form>
+
+        <!-- CREATE ACCOUNT FORM -->
+        <form id="registerForm" class="hidden" onsubmit="handleRegisterSubmit(event)">
+          <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 14px;">Create your ResuMind AI account to
+            store your resume versions and track interview mastery.</p>
+
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="regName" class="form-control" placeholder="Archit Prajapati" required>
+          </div>
+
+          <div class="form-group mt-3">
+            <label>Email Address</label>
+            <input type="email" id="regEmail" class="form-control" placeholder="archit@example.com" required>
+          </div>
+
+          <div class="form-group mt-3">
+            <label>Target Job Role</label>
+            <select id="regRole" class="form-select">
+              <option value="Senior Full Stack Software Engineer">Senior Full Stack Engineer</option>
+              <option value="Backend Developer (Node/Python)">Backend Developer</option>
+              <option value="Frontend Engineer (React/Next)">Frontend Engineer</option>
+              <option value="Data Scientist / AI Engineer">Data Scientist / AI Specialist</option>
+              <option value="DevOps & Cloud Engineer">DevOps & Cloud Engineer</option>
+            </select>
+          </div>
+
+          <div class="form-group mt-3">
+            <label>Password</label>
+            <input type="password" id="regPassword" class="form-control" placeholder="Create a strong password"
+              required>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100 mt-4">
+            <i class="fa-solid fa-user-plus"></i> Create Free Account
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- REAL AI API SETTINGS MODAL -->
+  <div class="modal-overlay hidden" id="apiKeyModal">
+    <div class="modal-card glass-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-sliders text-purple"></i> Configure Real AI API Key</h3>
+        <button class="modal-close" onclick="toggleApiKeyModal(false)"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body mt-3">
+        <p class="text-muted" style="font-size: 0.85rem;">Connect your personal AI API Key (Google Gemini, OpenAI, or
+          Groq) to enable 100% real live resume parsing, real AI mock interview evaluation, and instant bullet point
+          re-writing.</p>
+
+        <div class="form-group mt-3">
+          <label>Select AI Provider</label>
+          <select id="aiProviderSelect" class="form-select">
+            <option value="gemini">Google Gemini (Recommended - Free Tier Available)</option>
+            <option value="openai">OpenAI (GPT-4o-mini / GPT-3.5-Turbo)</option>
+            <option value="groq">Groq AI (Llama 3 70B - High Speed)</option>
+          </select>
+        </div>
+
+        <div class="form-group mt-3">
+          <label>Select AI Model</label>
+          <select id="aiModelSelect" class="form-select">
+            <option value="gemini-2.0-flash">gemini-2.0-flash (Fast & Accurate)</option>
+            <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+            <option value="gpt-4o-mini">gpt-4o-mini</option>
+            <option value="llama-3.3-70b-versatile">llama-3.3-70b-versatile (Groq)</option>
+          </select>
+        </div>
+
+        <div class="form-group mt-3">
+          <label>Your API Key</label>
+          <div class="input-password-wrapper">
+            <input type="password" id="userApiKeyInput" class="form-control" placeholder="AIzaSy... or sk-...">
+            <button class="btn-toggle-vis" onclick="toggleApiKeyVisibility()"><i class="fa-solid fa-eye"
+                id="eyeIcon"></i></button>
+          </div>
+          <small class="text-dim" style="display:block; margin-top:4px;">🔑 Your key is stored securely in your local
+            browser storage (`localStorage`) and never sent to any external 3rd-party server.</small>
+        </div>
+
+        <div class="modal-actions mt-4">
+          <button class="btn btn-secondary" onclick="clearApiKey()">Remove Key (Return to Demo Mode)</button>
+          <button class="btn btn-primary ms-auto" onclick="saveApiKey()">Save Key & Enable Real AI</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script src="app.js"></script>
 </body>

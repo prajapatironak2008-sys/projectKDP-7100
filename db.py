@@ -93,7 +93,7 @@ def init_db():
         if seed_user_id:
             save_resume_audit(
                 user_id=seed_user_id,
-                filename="Archit_Prajapati_FullStack_2026.pdf",
+                filename="User_Name_FullStack_2026.pdf",
                 raw_text="Fullstack Developer Resume sample",
                 ats_score=0,
                 target_role="Senior Full Stack Engineer",

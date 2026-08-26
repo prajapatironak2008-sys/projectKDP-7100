@@ -10,9 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initJdMatcher();
   initMockInterview();
   initResumeBuilder();
-  initApiKeySettings();
   initAuth();
-  updateAiStatusUI();
   checkPythonBackendStatus();
 });
 
@@ -67,11 +65,38 @@ async function checkPythonBackendStatus() {
       isBackendOnline = true;
       const data = await res.json();
       console.log('🐍 Python SQLite Backend Connected:', data.database);
+      updateAiStatusUI(data.backend_ai === "Active");
+
+      // Sync profile history if logged in
+      const savedUserEmail = localStorage.getItem('RESUMIND_CURRENT_USER');
+      if (savedUserEmail) {
+        try {
+          const profRes = await fetch(`${API_BASE_URL}/api/user/profile/${savedUserEmail}`);
+          if (profRes.ok) {
+            const profile = await profRes.json();
+            currentUser = {
+              id: profile.id,
+              email: profile.email,
+              name: profile.name,
+              role: profile.target_role,
+              initials: profile.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase(),
+              audits: profile.audits || [],
+              jd_matches: profile.jd_matches || [],
+              interviews: profile.interviews || []
+            };
+            updateUserUI();
+          }
+        } catch (e) {
+          console.warn("Could not sync profile from server");
+        }
+      }
     } else {
       isBackendOnline = false;
+      updateAiStatusUI(false);
     }
   } catch (e) {
     isBackendOnline = false;
+    updateAiStatusUI(false);
   }
 }
 
@@ -81,15 +106,21 @@ async function checkPythonBackendStatus() {
 let currentUser = null;
 
 const DEFAULT_USERS = {
-  'User@example.com': {
+  'archit@example.com': {
     id: 1,
-    email: 'User@example.com',
-    name: 'User name ',
+    email: 'archit@example.com',
+    name: 'Archit Prajapati',
     role: 'Senior Full Stack Engineer',
     initials: 'AP',
     audits: [
       { id: 101, name: 'User_Name_FullStack_2026.pdf', role: 'Senior Full Stack Engineer', score: 88, time: '2 hours ago' },
       { id: 102, name: 'Backend_Node_Developer_v2.docx', role: 'Node.js Backend Lead', score: 74, time: 'Yesterday' }
+    ],
+    jd_matches: [
+      { job_title: 'Senior Full Stack Engineer', match_percentage: 82, created_at: new Date().toISOString() }
+    ],
+    interviews: [
+      { role_focus: 'Senior Full Stack Engineer', round_type: 'Technical', difficulty: 'Senior', overall_score: '8.8/10', created_at: new Date().toISOString() }
     ]
   },
   'sarah@example.com': {
@@ -100,6 +131,12 @@ const DEFAULT_USERS = {
     initials: 'SJ',
     audits: [
       { id: 201, name: 'Sarah_Jenkins_DataScientist.pdf', role: 'Data Scientist / ML Engineer', score: 92, time: '1 day ago' }
+    ],
+    jd_matches: [
+      { job_title: 'Data Scientist / AI Specialist', match_percentage: 90, created_at: new Date().toISOString() }
+    ],
+    interviews: [
+      { role_focus: 'Data Scientist / AI Specialist', round_type: 'Technical', difficulty: 'Mid-Level', overall_score: '9.2/10', created_at: new Date().toISOString() }
     ]
   }
 };
@@ -114,11 +151,213 @@ function initAuth() {
 
   if (savedUserEmail && usersDb[savedUserEmail]) {
     currentUser = usersDb[savedUserEmail];
+    if (!currentUser.jd_matches) currentUser.jd_matches = [];
+    if (!currentUser.interviews) currentUser.interviews = [];
+    showAppPortal(true);
   } else {
-    currentUser = usersDb['archit@example.com'];
+    showAppPortal(false);
+  }
+}
+
+function showAppPortal(show) {
+  const landingView = document.getElementById('authLandingView');
+  const mainPortal = document.getElementById('mainAppPortal');
+
+  if (show) {
+    if (landingView) landingView.classList.add('hidden');
+    if (mainPortal) mainPortal.classList.remove('hidden');
+    updateUserUI();
+  } else {
+    if (landingView) landingView.classList.remove('hidden');
+    if (mainPortal) mainPortal.classList.add('hidden');
+  }
+}
+
+function switchAuthPageView(tab) {
+  const loginForm = document.getElementById('pageLoginForm');
+  const regForm = document.getElementById('pageRegisterForm');
+  const tabLogin = document.getElementById('pageTabLogin');
+  const tabReg = document.getElementById('pageTabRegister');
+
+  if (tab === 'login') {
+    if (loginForm) loginForm.classList.remove('hidden');
+    if (regForm) regForm.classList.add('hidden');
+    if (tabLogin) tabLogin.classList.add('active');
+    if (tabReg) tabReg.classList.remove('active');
+  } else {
+    if (loginForm) loginForm.classList.add('hidden');
+    if (regForm) regForm.classList.remove('hidden');
+    if (tabReg) tabReg.classList.add('active');
+    if (tabLogin) tabLogin.classList.remove('active');
+  }
+}
+
+async function handlePageLoginSubmit(e) {
+  e.preventDefault();
+  const email = document.getElementById('pLoginEmail').value.trim().toLowerCase();
+  const password = document.getElementById('pLoginPassword').value;
+  await loginWithCredentials(email, password);
+}
+
+async function handlePageRegisterSubmit(e) {
+  e.preventDefault();
+  const name = document.getElementById('pRegName').value.trim();
+  const email = document.getElementById('pRegEmail').value.trim().toLowerCase();
+  const password = document.getElementById('pRegPassword').value;
+  const role = document.getElementById('pRegRole').value;
+  await registerWithCredentials(name, email, password, role);
+}
+
+async function loginWithCredentials(email, password) {
+  const submitBtn = document.getElementById('pLoginSubmitBtn');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Authenticating...';
   }
 
-  updateUserUI();
+  // Try Python Backend Login if server is active
+  if (isBackendOnline) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        // Fetch detailed profile immediately
+        const profRes = await fetch(`${API_BASE_URL}/api/user/profile/${data.user.email}`);
+        if (profRes.ok) {
+          const profile = await profRes.json();
+          currentUser = {
+            id: profile.id,
+            email: profile.email,
+            name: profile.name,
+            role: profile.target_role,
+            initials: profile.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase(),
+            audits: profile.audits || [],
+            jd_matches: profile.jd_matches || [],
+            interviews: profile.interviews || []
+          };
+        } else {
+          currentUser = {
+            id: data.user.id,
+            email: data.user.email,
+            name: data.user.name,
+            role: data.user.target_role,
+            initials: data.user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase(),
+            audits: [],
+            jd_matches: [],
+            interviews: []
+          };
+        }
+        localStorage.setItem('RESUMIND_CURRENT_USER', email);
+        showAppPortal(true);
+        alert(`🎉 Logged in successfully! Welcome, ${currentUser.name}.`);
+        return;
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(`Authentication failed: ${err.detail || 'Invalid email or password.'}`);
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sign In to Account';
+        }
+        return;
+      }
+    } catch (e) {
+      console.warn("Backend auth failed, using local database fallback");
+    }
+  }
+
+  // Local storage fallback
+  const usersDb = JSON.parse(localStorage.getItem('RESUMIND_USERS') || '{}');
+  if (usersDb[email]) {
+    currentUser = usersDb[email];
+    if (!currentUser.jd_matches) currentUser.jd_matches = [];
+    if (!currentUser.interviews) currentUser.interviews = [];
+    localStorage.setItem('RESUMIND_CURRENT_USER', email);
+    showAppPortal(true);
+    alert(`🎉 Welcome back, ${currentUser.name}! Signed in successfully.`);
+  } else {
+    // If not found, let's create a dynamic demo user session
+    const namePart = email.split('@')[0];
+    const newName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+    quickLogin(email, newName, 'Software Developer');
+  }
+
+  if (submitBtn) {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sign In to Account';
+  }
+}
+
+async function registerWithCredentials(name, email, password, role) {
+  const submitBtn = document.getElementById('pRegisterSubmitBtn');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating Account...';
+  }
+
+  const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'US';
+
+  // Sync with Python SQLite Database if available
+  if (isBackendOnline) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password, role })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        currentUser = {
+          id: data.user.id,
+          email: data.user.email,
+          name: data.user.name,
+          role: data.user.target_role,
+          initials: initials,
+          audits: [],
+          jd_matches: [],
+          interviews: []
+        };
+        localStorage.setItem('RESUMIND_CURRENT_USER', email);
+        showAppPortal(true);
+        alert(`✨ Account created in SQLite DB! Welcome, ${name}.`);
+        return;
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(`Registration failed: ${err.detail || 'Could not create account.'}`);
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Create Account & Save to Database';
+        }
+        return;
+      }
+    } catch (e) {
+      console.warn('Backend registration failed, saving locally');
+    }
+  }
+
+  // Save to Local DB & IndexedDB
+  const usersDb = JSON.parse(localStorage.getItem('RESUMIND_USERS') || '{}');
+  usersDb[email] = { id: Date.now(), email, name, role, initials, audits: [], jd_matches: [], interviews: [] };
+  localStorage.setItem('RESUMIND_USERS', JSON.stringify(usersDb));
+  localStorage.setItem('RESUMIND_CURRENT_USER', email);
+  currentUser = usersDb[email];
+
+  // Save to IndexedDB
+  if (dbInstance) {
+    const tx = dbInstance.transaction('users', 'readwrite');
+    tx.objectStore('users').put(currentUser);
+  }
+
+  showAppPortal(true);
+  alert(`✨ Account created successfully! Welcome, ${name}.`);
+
+  if (submitBtn) {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Create Account & Save to Database';
+  }
 }
 
 function updateUserUI() {
@@ -146,6 +385,93 @@ function updateUserUI() {
         <button class="btn-icon-xs ms-1" title="Sign Out" onclick="logoutUser()"><i class="fa-solid fa-right-from-bracket"></i></button>
       </div>
     `;
+  }
+
+  // --------------------------------------------------------------------------
+  // DYNAMIC DASHBOARD METRICS CALCULATION (OUT OF 10)
+  // --------------------------------------------------------------------------
+
+  // 1. Avg ATS Score
+  let avgAts = 0;
+  if (currentUser.audits && currentUser.audits.length > 0) {
+    const sum = currentUser.audits.reduce((acc, a) => acc + (a.score || 0), 0);
+    avgAts = sum / currentUser.audits.length;
+  }
+  const atsValOutof10 = (avgAts / 10).toFixed(1);
+  const atsScoreEl = document.getElementById('dashAtsScore');
+  if (atsScoreEl) atsScoreEl.innerText = `${atsValOutof10}/10`;
+
+  // 2. JD Match Rate
+  let avgMatch = 0;
+  if (currentUser.jd_matches && currentUser.jd_matches.length > 0) {
+    const sum = currentUser.jd_matches.reduce((acc, m) => acc + (m.match_percentage || 0), 0);
+    avgMatch = sum / currentUser.jd_matches.length;
+  }
+  const matchValOutof10 = (avgMatch / 10).toFixed(1);
+  const matchRateEl = document.getElementById('dashMatchRate');
+  if (matchRateEl) matchRateEl.innerText = `${matchValOutof10}/10`;
+
+  // 3. Mock Interviews Count & Trend Avg Score
+  const interviewCount = currentUser.interviews ? currentUser.interviews.length : 0;
+  const interviewEl = document.getElementById('dashInterviewCount');
+  if (interviewEl) {
+    interviewEl.innerText = `${interviewCount} Session${interviewCount === 1 ? '' : 's'}`;
+  }
+
+  let avgInterviewScore = 0;
+  if (currentUser.interviews && currentUser.interviews.length > 0) {
+    let sum = 0;
+    let count = 0;
+    currentUser.interviews.forEach(i => {
+      const num = parseFloat(i.overall_score);
+      if (!isNaN(num)) {
+        sum += num;
+        count++;
+      }
+    });
+    if (count > 0) avgInterviewScore = sum / count;
+  }
+
+  const mockScoreTrend = document.querySelector('#dashInterviewCount + .trend');
+  if (mockScoreTrend) {
+    mockScoreTrend.innerHTML = `<i class="fa-solid fa-star text-amber"></i> Avg: ${avgInterviewScore.toFixed(1)}/10`;
+  }
+
+  // 4. Overall Interview Readiness Score (Out of 10)
+  let overallPerformance = 0;
+  if (avgAts > 0 && avgInterviewScore > 0) {
+    overallPerformance = ((avgAts / 10) + avgInterviewScore) / 2;
+  } else if (avgAts > 0) {
+    overallPerformance = avgAts / 10;
+  } else if (avgInterviewScore > 0) {
+    overallPerformance = avgInterviewScore;
+  }
+
+  const readinessEl = document.getElementById('dashReadinessLevel');
+  if (readinessEl) {
+    readinessEl.innerText = `${overallPerformance.toFixed(1)}/10`;
+  }
+
+  // Readiness badge tier update
+  const readinessBadge = document.querySelector('#dashReadinessLevel + .badge');
+  if (readinessBadge) {
+    if (overallPerformance === 0) {
+      readinessBadge.className = 'badge';
+      readinessBadge.style.backgroundColor = 'var(--text-dim)';
+      readinessBadge.innerText = 'Not Started';
+    } else if (overallPerformance < 5) {
+      readinessBadge.className = 'badge';
+      readinessBadge.style.backgroundColor = 'var(--status-danger)';
+      readinessBadge.innerText = 'Needs Practice';
+    } else if (overallPerformance < 7.5) {
+      readinessBadge.className = 'badge';
+      readinessBadge.style.backgroundColor = 'var(--status-warning)';
+      readinessBadge.innerText = 'Getting Ready';
+    } else {
+      readinessBadge.className = 'badge';
+      readinessBadge.style.backgroundColor = 'var(--status-success)';
+      readinessBadge.innerText = 'Shortlist Tier';
+    }
   }
 
   renderUserAudits();
@@ -189,15 +515,15 @@ function switchAuthTab(tab) {
   const tabReg = document.getElementById('tabBtnRegister');
 
   if (tab === 'login') {
-    loginForm.classList.remove('hidden');
-    regForm.classList.add('hidden');
-    tabLogin.classList.add('active');
-    tabReg.classList.remove('active');
+    if (loginForm) loginForm.classList.remove('hidden');
+    if (regForm) regForm.classList.add('hidden');
+    if (tabLogin) tabLogin.classList.add('active');
+    if (tabReg) tabReg.classList.remove('active');
   } else {
-    loginForm.classList.add('hidden');
-    regForm.classList.remove('hidden');
-    tabReg.classList.add('active');
-    tabLogin.classList.remove('active');
+    if (loginForm) loginForm.classList.add('hidden');
+    if (regForm) regForm.classList.remove('hidden');
+    if (tabReg) tabReg.classList.add('active');
+    if (tabLogin) tabLogin.classList.remove('active');
   }
 }
 
@@ -205,49 +531,8 @@ async function handleLoginSubmit(e) {
   e.preventDefault();
   const email = document.getElementById('loginEmail').value.trim().toLowerCase();
   const password = document.getElementById('loginPassword').value;
-
-  // Try Python Backend Login if server is active
-  if (isBackendOnline) {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        currentUser = {
-          id: data.user.id,
-          email: data.user.email,
-          name: data.user.name,
-          role: data.user.target_role,
-          initials: data.user.name.split(' ').map(n => n[0]).join('').slice(0, 2),
-          audits: []
-        };
-        localStorage.setItem('RESUMIND_CURRENT_USER', email);
-        updateUserUI();
-        toggleAuthModal(false);
-        alert(`🎉 Logged into SQLite Database! Welcome, ${currentUser.name}.`);
-        return;
-      }
-    } catch (e) {
-      console.warn("Backend auth failed, using local database");
-    }
-  }
-
-  // Local storage fallback
-  const usersDb = JSON.parse(localStorage.getItem('RESUMIND_USERS') || '{}');
-  if (usersDb[email]) {
-    currentUser = usersDb[email];
-    localStorage.setItem('RESUMIND_CURRENT_USER', email);
-    updateUserUI();
-    toggleAuthModal(false);
-    alert(`🎉 Welcome back, ${currentUser.name}! Signed in successfully.`);
-  } else {
-    const namePart = email.split('@')[0];
-    const newName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
-    quickLogin(email, newName, 'Software Developer');
-  }
+  await loginWithCredentials(email, password);
+  toggleAuthModal(false);
 }
 
 async function handleRegisterSubmit(e) {
@@ -256,42 +541,8 @@ async function handleRegisterSubmit(e) {
   const email = document.getElementById('regEmail').value.trim().toLowerCase();
   const password = document.getElementById('regPassword').value;
   const role = document.getElementById('regRole').value;
-
-  const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'US';
-
-  // Sync with Python SQLite Database if available
-  if (isBackendOnline) {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, role })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        console.log('Registered in SQLite DB:', data);
-      }
-    } catch (e) {
-      console.warn('Backend reg error:', e);
-    }
-  }
-
-  // Save to Local DB & IndexedDB
-  const usersDb = JSON.parse(localStorage.getItem('RESUMIND_USERS') || '{}');
-  usersDb[email] = { id: Date.now(), email, name, role, initials, audits: [] };
-  localStorage.setItem('RESUMIND_USERS', JSON.stringify(usersDb));
-  localStorage.setItem('RESUMIND_CURRENT_USER', email);
-  currentUser = usersDb[email];
-
-  // Save to IndexedDB
-  if (dbInstance) {
-    const tx = dbInstance.transaction('users', 'readwrite');
-    tx.objectStore('users').put(currentUser);
-  }
-
-  updateUserUI();
+  await registerWithCredentials(name, email, password, role);
   toggleAuthModal(false);
-  alert(`✨ Account created & saved to database! Welcome, ${name}.`);
 }
 
 function quickLogin(email, name, role) {
@@ -306,24 +557,17 @@ function quickLogin(email, name, role) {
   currentUser = usersDb[email];
   localStorage.setItem('RESUMIND_CURRENT_USER', email);
 
-  updateUserUI();
-  toggleAuthModal(false);
+  showAppPortal(true);
   alert(`⚡ Quick signed in as ${name}!`);
 }
 
 function logoutUser() {
   localStorage.removeItem('RESUMIND_CURRENT_USER');
-  currentUser = {
-    id: 0,
-    email: 'guest@example.com',
-    name: 'Guest User',
-    role: 'Job Seeker',
-    initials: 'GU',
-    audits: []
-  };
-  updateUserUI();
+  currentUser = null;
+  showAppPortal(false);
   alert('Signed out successfully.');
 }
+
 
 function saveUserAuditRecord(fileName, role, score) {
   if (!currentUser || currentUser.email === 'guest@example.com') return;
@@ -373,14 +617,10 @@ function saveUserAuditRecord(fileName, role, score) {
   }
 }
 
-/* --------------------------------------------------------------------------
-   REAL LLM API CALLER ENGINE (Gemini / OpenAI / Groq)
-   -------------------------------------------------------------------------- */
-async function callRealAI(prompt, systemInstruction = "You are a professional AI career coach & executive recruiter.") {
-  const apiKey = localStorage.getItem('RESUMIND_API_KEY');
-  const provider = localStorage.getItem('RESUMIND_AI_PROVIDER') || 'gemini';
-  const model = localStorage.getItem('RESUMIND_AI_MODEL') || 'gemini-2.0-flash';
+function saveUserJdMatchRecord(jobTitle, matchPercentage, matchSummary, gapMatrix) {
+  if (!currentUser) return;
 
+  HEAD
   if (!apiKey) {
     throw new Error('NO_API_KEY');
   }
@@ -424,146 +664,142 @@ async function callRealAI(prompt, systemInstruction = "You are a professional AI
       { role: 'user', content: prompt }
     ],
     temperature: 0.7
-  };
-
-  const res = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
+    _const ; newRecord = {
+      job_title: jobTitle,
+      match_percentage: matchPercentage,
+      match_summary: matchSummary,
+      gap_matrix: gapMatrix,
+      created_at: new Date().toISOString()
     },
-    body: JSON.stringify(payload)
-  });
+    get const() {
+      return this._const;
+    },
+    set const(value) {
+      this._const = value;
+    },
+;
 
-  if (!res.ok) {
-    const errData = await res.json().catch(() => ({}));
-    throw new Error(errData.error?.message || `API Error: ${res.status}`);
+  if (!currentUser.jd_matches) currentUser.jd_matches = [];
+  currentUser.jd_matches.unshift(newRecord);
+
+  // Sync to localStorage
+  const usersDb = JSON.parse(localStorage.getItem('RESUMIND_USERS') || '{}');
+  if (usersDb[currentUser.email]) {
+    usersDb[currentUser.email].jd_matches = currentUser.jd_matches;
+    localStorage.setItem('RESUMIND_USERS', JSON.stringify(usersDb));
   }
 
-  const data = await res.json();
-  return data.choices?.[0]?.message?.content;
-}
-
-/* --------------------------------------------------------------------------
-   API KEY SETTINGS MODAL & STATE
-   -------------------------------------------------------------------------- */
-function initApiKeySettings() {
-  const modal = document.getElementById('apiKeyModal');
-  const openBtn = document.getElementById('openApiKeyModalBtn');
-  const providerSelect = document.getElementById('aiProviderSelect');
-  const modelSelect = document.getElementById('aiModelSelect');
-
-  if (openBtn) {
-    openBtn.addEventListener('click', () => toggleApiKeyModal(true));
-  }
-
-  if (providerSelect) {
-    providerSelect.addEventListener('change', () => {
-      const val = providerSelect.value;
-      if (val === 'gemini') {
-        modelSelect.innerHTML = `
-          <option value="gemini-2.0-flash">gemini-2.0-flash (Fast & Accurate)</option>
-          <option value="gemini-1.5-flash">gemini-1.5-flash</option>
-        `;
-      } else if (val === 'openai') {
-        modelSelect.innerHTML = `
-          <option value="gpt-4o-mini">gpt-4o-mini</option>
-          <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
-        `;
-      } else if (val === 'groq') {
-        modelSelect.innerHTML = `
-          <option value="llama-3.3-70b-versatile">llama-3.3-70b-versatile</option>
-          <option value="mixtral-8x7b-32768">mixtral-8x7b-32768</option>
-        `;
-      }
+  // Save to IndexedDB
+  if (dbInstance) {
+    a
+    const tx = dbInstance.transaction('jd_matches', 'readwrite');
+    tx.objectStore('jd_matches').add({
+      user_email: currentUser.email,
+      job_title: jobTitle,
+      match_percentage: matchPercentage,
+      match_summary: matchSummary,
+      created_at: new Date().toISOString()
     });
   }
 
-  const savedKey = localStorage.getItem('RESUMIND_API_KEY');
-  const savedProvider = localStorage.getItem('RESUMIND_AI_PROVIDER');
-  const savedModel = localStorage.getItem('RESUMIND_AI_MODEL');
-
-  if (savedKey) document.getElementById('userApiKeyInput').value = savedKey;
-  if (savedProvider) document.getElementById('aiProviderSelect').value = savedProvider;
-  if (savedModel && modelSelect) {
-    modelSelect.value = savedModel;
-  }
-}
-
-function toggleApiKeyModal(show) {
-  const modal = document.getElementById('apiKeyModal');
-  if (modal) modal.classList.toggle('hidden', !show);
-}
-
-function toggleApiKeyVisibility() {
-  const input = document.getElementById('userApiKeyInput');
-  const eyeIcon = document.getElementById('eyeIcon');
-  if (input.type === 'password') {
-    input.type = 'text';
-    eyeIcon.className = 'fa-solid fa-eye-slash';
-  } else {
-    input.type = 'password';
-    eyeIcon.className = 'fa-solid fa-eye';
-  }
-}
-
-function saveApiKey() {
-  const key = document.getElementById('userApiKeyInput').value.trim();
-  const provider = document.getElementById('aiProviderSelect').value;
-  const model = document.getElementById('aiModelSelect').value;
-
-  if (!key) {
-    alert('Please enter your API Key.');
-    return;
+  // Sync to Python SQLite DB
+  if (isBackendOnline && currentUser.id) {
+    fetch(`${API_BASE_URL}/api/jd-matches/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: currentUser.id,
+        jd_text: "Job Description details",
+        match_percentage: matchPercentage,
+        match_summary: matchSummary,
+        gap_matrix: gapMatrix,
+        job_title: jobTitle
+      })
+    }).catch(e => console.warn('SQLite JD Match Sync error:', e));
   }
 
-  localStorage.setItem('RESUMIND_API_KEY', key);
-  localStorage.setItem('RESUMIND_AI_PROVIDER', provider);
-  localStorage.setItem('RESUMIND_AI_MODEL', model);
-
-  updateAiStatusUI();
-  toggleApiKeyModal(false);
-  alert(`✨ Real AI Connected Successfully! (${provider.toUpperCase()} - ${model})`);
+  updateUserUI();
 }
 
-function clearApiKey() {
-  localStorage.removeItem('RESUMIND_API_KEY');
-  localStorage.removeItem('RESUMIND_AI_PROVIDER');
-  localStorage.removeItem('RESUMIND_AI_MODEL');
-  document.getElementById('userApiKeyInput').value = '';
-  updateAiStatusUI();
-  toggleApiKeyModal(false);
-  alert('API Key removed. System returned to Demo Mode.');
+function saveUserInterviewRecord(roleFocus, roundType, difficulty, overallScore) {
+  if (!currentUser) return;
+
+  const newRecord = {
+    role_focus: roleFocus,
+    round_type: roundType,
+    difficulty: difficulty,
+    overall_score: overallScore,
+    created_at: new Date().toISOString()
+  };
+
+  if (!currentUser.interviews) currentUser.interviews = [];
+  currentUser.interviews.unshift(newRecord);
+
+  // Sync to localStorage
+  const usersDb = JSON.parse(localStorage.getItem('RESUMIND_USERS') || '{}');
+  if (usersDb[currentUser.email]) {
+    usersDb[currentUser.email].interviews = currentUser.interviews;
+    localStorage.setItem('RESUMIND_USERS', JSON.stringify(usersDb));
+  }
+
+  // Save to IndexedDB
+  if (dbInstance) {
+    const tx = dbInstance.transaction('interviews', 'readwrite');
+    tx.objectStore('interviews').add({
+      user_email: currentUser.email,
+      role_focus: roleFocus,
+      round_type: roundType,
+      difficulty: difficulty,
+      overall_score: overallScore,
+      created_at: new Date().toISOString()
+    });
+  }
+
+  // Sync to Python SQLite DB
+  if (isBackendOnline && currentUser.id) {
+    fetch(`${API_BASE_URL}/api/interviews/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: currentUser.id,
+        role_focus: roleFocus,
+        round_type: roundType,
+        difficulty: difficulty,
+        overall_score: overallScore
+      })
+    }).catch(e => console.warn('SQLite Interview Sync error:', e));
+  }
+
+  updateUserUI();
 }
 
-function updateAiStatusUI() {
-  const key = localStorage.getItem('RESUMIND_API_KEY');
-  const provider = localStorage.getItem('RESUMIND_AI_PROVIDER') || 'Demo';
-  const model = localStorage.getItem('RESUMIND_AI_MODEL') || 'Sandbox';
-
+/* --------------------------------------------------------------------------
+   BACKEND AI ENGINE STATUS VISUALIZER
+   -------------------------------------------------------------------------- */
+function updateAiStatusUI(isAiActive) {
   const dot = document.getElementById('aiStatusDot');
   const text = document.getElementById('aiStatusText');
   const sidebarModelText = document.getElementById('sidebarAiModelText');
   const sidebarProviderText = document.getElementById('sidebarAiProviderText');
   const keyStatusSpan = document.getElementById('keyStatusSpan');
 
-  if (key) {
-    dot.className = 'dot online';
-    text.innerText = 'Real AI Online';
-    sidebarModelText.innerText = `AI: ${model}`;
-    sidebarProviderText.innerText = `Powered by ${provider.toUpperCase()}`;
+  if (isAiActive) {
+    if (dot) dot.className = 'dot online';
+    if (text) text.innerText = 'AI Engine Connected';
+    if (sidebarModelText) sidebarModelText.innerText = 'ResuMind AI Active';
+    if (sidebarProviderText) sidebarProviderText.innerText = 'Secure Backend AI Gateway';
     if (keyStatusSpan) {
       keyStatusSpan.className = 'text-green';
-      keyStatusSpan.innerText = `Connected (${model})`;
+      keyStatusSpan.innerText = 'Active (Backend Key)';
     }
   } else {
-    dot.className = 'dot';
-    text.innerText = 'Sandbox Mode';
-    sidebarModelText.innerText = 'AI Engine: Sandbox';
-    sidebarProviderText.innerText = "Click 'AI Settings' to connect key";
+    if (dot) dot.className = 'dot';
+    if (text) text.innerText = 'Demo Sandbox Mode';
+    if (sidebarModelText) sidebarModelText.innerText = 'AI Engine: Sandbox';
+    if (sidebarProviderText) sidebarProviderText.innerText = 'Configure GEMINI_API_KEY in .env';
     if (keyStatusSpan) {
       keyStatusSpan.className = 'text-amber';
-      keyStatusSpan.innerText = 'Not Configured';
+      keyStatusSpan.innerText = 'Backend Key Missing';
     }
   }
 }
@@ -697,9 +933,7 @@ async function runResumeAnalysis(fileName = 'Custom_Resume.pdf') {
   const resultsCard = document.getElementById('analysisResults');
   resultsCard.scrollIntoView({ behavior: 'smooth' });
 
-  const isRealAi = !!localStorage.getItem('RESUMIND_API_KEY');
-
-  if (!isRealAi) {
+  if (!isBackendOnline) {
     simulateResumeAnalysis(fileName, 88);
     saveUserAuditRecord(fileName, currentUser ? currentUser.role : 'Software Engineer', 88);
     return;
@@ -710,39 +944,34 @@ async function runResumeAnalysis(fileName = 'Custom_Resume.pdf') {
   analyzeBtn.disabled = true;
 
   try {
-    const prompt = `
-Analyze this resume text and provide output in strict JSON format:
-Resume Text:
-"""
-${text}
-"""
+    const res = await fetch(`${API_BASE_URL}/api/ai/analyze-resume`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        resume_text: text,
+        target_role: currentUser ? currentUser.role : 'Software Engineer'
+      })
+    });
 
-Return JSON ONLY matching this structure:
-{
-  "target_role": "String summary of role",
-  "ats_score": 88,
-  "headline": "Short evaluation headline",
-  "subhead": "Detailed evaluation summary",
-  "detected_skills": ["Skill 1", "Skill 2", "Skill 3"],
-  "missing_keywords": ["Missing 1", "Missing 2"],
-  "check_items": [
-    {"type": "pass", "title": "Check Title", "desc": "Check Description"},
-    {"type": "warn", "title": "Check Title", "desc": "Check Description"}
-  ],
-  "bullet_enhancements": [
-    {"original": "Original bullet", "improved": "Rewritten bullet using STAR method"}
-  ]
-}
-`;
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Backend AI Analysis failed');
+    }
 
-    const rawReply = await callRealAI(prompt, "You are a JSON-only response engine. Return valid JSON without markdown formatting.");
-    let cleanJsonStr = rawReply.replace(/```json/g, '').replace(/```/g, '').trim();
-    const data = JSON.parse(cleanJsonStr);
-
+    const data = await res.json();
     const score = data.ats_score || 88;
     document.getElementById('resumeRoleTag').innerText = `Target: ${data.target_role || 'Candidate'}`;
+...
+=======
+...
+>>>>
+
     document.getElementById('scoreValue').innerText = score;
 
+=======
+    document.getElementById('scoreValue').innerText = (score / 10).toFixed(1);
+
+>>>>>>> c6ec42f76df21e094f67e5e12cc47ed2879ce4a1
     const dashoffset = 264 - (264 * score / 100);
     document.getElementById('scoreCircleProgress').style.strokeDashoffset = dashoffset;
 
@@ -795,9 +1024,9 @@ Return JSON ONLY matching this structure:
 
 function simulateResumeAnalysis(fileName, score) {
   document.getElementById('resumeRoleTag').innerText = `Target: Senior Software Engineer`;
-  document.getElementById('scoreValue').innerText = score;
+  document.getElementById('scoreValue').innerText = (score / 10).toFixed(1);
   document.getElementById('scoreCircleProgress').style.strokeDashoffset = '32';
-  document.getElementById('scoreHeadline').innerText = 'Top 8% Candidate Resume!';
+  document.getElementById('scoreHeadline').innerText = 'Top Tier Resume!';
   document.getElementById('scoreSubhead').innerText = 'Outstanding ATS formatting, contact links, and tech keyword density.';
 }
 
@@ -817,39 +1046,25 @@ function initJdMatcher() {
       return;
     }
 
-    const isRealAi = !!localStorage.getItem('RESUMIND_API_KEY');
-
-    if (isRealAi) {
+    if (isBackendOnline) {
       matchBtn.innerText = '⚡ Real AI Calculating Gap Analysis...';
       matchBtn.disabled = true;
 
       try {
-        const prompt = `
-Compare this Resume against the Job Description and return a JSON match report:
+        const res = await fetch(`${API_BASE_URL}/api/ai/jd-match`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ resume_text: resumeText, jd_text: jdText })
+        });
 
-Resume:
-"""${resumeText}"""
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || 'Backend AI Job Match failed');
+        }
 
-Job Description:
-"""${jdText}"""
-
-Return JSON format ONLY:
-{
-  "match_percentage": 82,
-  "match_title": "Strong Candidate Fit",
-  "match_desc": "Summary explanation of overlap",
-  "pro_tip": "Specific recommendation",
-  "matrix": [
-    {"skill": "React.js", "status": "Found", "rec": "Keep in top section"},
-    {"skill": "Kubernetes", "status": "Missing", "rec": "Add experience with containers"}
-  ]
-}
-`;
-        const reply = await callRealAI(prompt, "You are an AI recruiting manager. Return clean valid JSON only.");
-        const cleanJsonStr = reply.replace(/```json/g, '').replace(/```/g, '').trim();
-        const data = JSON.parse(cleanJsonStr);
-
-        document.getElementById('matchPercentVal').innerText = `${data.match_percentage}%`;
+        const data = await res.json();
+        const scoreOutof10 = (data.match_percentage / 10).toFixed(1);
+        document.getElementById('matchPercentVal').innerText = `${scoreOutof10}/10`;
         document.getElementById('matchTitle').innerText = data.match_title;
         document.getElementById('matchDesc').innerText = data.match_desc;
         document.getElementById('jdMatchProTip').innerHTML = `<strong>Pro-Tip:</strong> ${data.pro_tip}`;
@@ -863,6 +1078,7 @@ Return JSON format ONLY:
           </tr>
         `).join('');
 
+        saveUserJdMatchRecord(data.match_title || 'Target Position', data.match_percentage, data.match_desc, data.matrix);
         document.getElementById('jdMatchOutput').scrollIntoView({ behavior: 'smooth' });
         return;
       } catch (err) {
@@ -873,8 +1089,11 @@ Return JSON format ONLY:
       }
     }
 
-    document.getElementById('matchPercentVal').innerText = '78%';
+    const fallbackScore = 78;
+    const scoreOutof10 = (fallbackScore / 10).toFixed(1);
+    document.getElementById('matchPercentVal').innerText = `${scoreOutof10}/10`;
     document.getElementById('matchTitle').innerText = 'Moderate-High Alignment';
+    saveUserJdMatchRecord('Software Developer Match', fallbackScore, 'Good overlap with core skills.', []);
     document.getElementById('jdMatchOutput').scrollIntoView({ behavior: 'smooth' });
   });
 }
@@ -884,6 +1103,7 @@ Return JSON format ONLY:
    -------------------------------------------------------------------------- */
 let currentQuestionIndex = 0;
 let activeRole = 'Full Stack Developer';
+let currentRoundScores = [];
 
 function initMockInterview() {
   const startBtn = document.getElementById('startInterviewBtn');
@@ -902,6 +1122,7 @@ function initMockInterview() {
     document.getElementById('activeRoleBadge').innerText = `${activeRole} • ${round}`;
 
     currentQuestionIndex = 0;
+    currentRoundScores = [];
     await generateAiQuestion();
   });
 
@@ -925,7 +1146,17 @@ function initMockInterview() {
       document.getElementById('candidateAnswerText').value = '';
       await generateAiQuestion();
     } else {
-      alert('🎉 Mock Interview Round Completed! Reviewing your overall readiness score...');
+      let avg = 8.0;
+      if (currentRoundScores.length > 0) {
+        const sum = currentRoundScores.reduce((a, b) => a + b, 0);
+        avg = sum / currentRoundScores.length;
+      }
+      const overallStr = `${avg.toFixed(1)}/10`;
+      const round = document.getElementById('interviewRoundSelect').value;
+      const diff = document.getElementById('interviewDifficultySelect')?.value || 'Mid-Level';
+
+      saveUserInterviewRecord(activeRole, round, diff, overallStr);
+      alert(`🎉 Mock Interview Round Completed! Overall Score: ${overallStr}`);
       switchTab('dashboard');
     }
   });
@@ -936,14 +1167,30 @@ async function generateAiQuestion() {
   const qNum = document.getElementById('qNumberLabel');
   qNum.innerText = `Question ${currentQuestionIndex + 1} of 3`;
 
-  const isRealAi = !!localStorage.getItem('RESUMIND_API_KEY');
-
-  if (isRealAi) {
+  if (isBackendOnline) {
     qText.innerText = '"Generating tailored question with Real AI..."';
     try {
-      const prompt = `Generate 1 tough, realistic technical or STAR behavioral interview question for a ${activeRole} position. Return ONLY the question string inside quotes.`;
-      const reply = await callRealAI(prompt, "You are a Senior Tech Lead conducting a job interview.");
-      qText.innerText = reply.trim();
+      const round = document.getElementById('interviewRoundSelect').value;
+      const diff = document.getElementById('interviewDifficultySelect')?.value || 'Mid-Level';
+
+      const res = await fetch(`${API_BASE_URL}/api/ai/interview-question`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          role: activeRole,
+          round_type: round,
+          difficulty: diff,
+          question_index: currentQuestionIndex
+        })
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || 'Backend question generation failed');
+      }
+
+      const data = await res.json();
+      qText.innerText = data.question ? `"${data.question.trim()}"` : '"AI question failed to generate"';
       return;
     } catch (e) {
       console.warn("AI Question fallback:", e);
@@ -969,31 +1216,32 @@ async function evaluateCandidateAnswerWithAI(answer) {
   evalPanel.classList.remove('hidden');
   evalPanel.scrollIntoView({ behavior: 'smooth' });
 
-  const isRealAi = !!localStorage.getItem('RESUMIND_API_KEY');
-
-  if (isRealAi) {
+  if (isBackendOnline) {
     document.getElementById('evalScoreBadge').innerText = 'AI Scoring...';
     try {
-      const prompt = `
-Question: "${question}"
-Candidate Answer: "${answer}"
+      const res = await fetch(`${API_BASE_URL}/api/ai/evaluate-answer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question, candidate_answer: answer })
+      });
 
-Evaluate this answer and return JSON format ONLY:
-{
-  "score": "8.8/10",
-  "strengths": ["Strength 1", "Strength 2"],
-  "missed": ["Point 1", "Point 2"],
-  "model_answer": "Model STAR response..."
-}
-`;
-      const reply = await callRealAI(prompt, "You are an Executive AI Tech Recruiter giving STAR feedback.");
-      const cleanJsonStr = reply.replace(/```json/g, '').replace(/```/g, '').trim();
-      const data = JSON.parse(cleanJsonStr);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || 'Backend answer evaluation failed');
+      }
 
+      const data = await res.json();
       document.getElementById('evalScoreBadge').innerText = `Score: ${data.score}`;
       document.getElementById('evalStrengths').innerHTML = (data.strengths || []).map(s => `<li>${s}</li>`).join('');
       document.getElementById('evalMissed').innerHTML = (data.missed || []).map(m => `<li>${m}</li>`).join('');
       document.getElementById('improvedAnswerText').innerText = `"${data.model_answer}"`;
+
+      const numScore = parseFloat(data.score);
+      if (!isNaN(numScore)) {
+        currentRoundScores.push(numScore);
+      } else {
+        currentRoundScores.push(8.5);
+      }
       return;
     } catch (e) {
       console.warn("Real AI eval error:", e);
@@ -1003,6 +1251,7 @@ Evaluate this answer and return JSON format ONLY:
   document.getElementById('evalScoreBadge').innerText = 'Score: 8.5/10';
   document.getElementById('evalStrengths').innerHTML = '<li>Used STAR method clearly with situation, action, and result.</li>';
   document.getElementById('evalMissed').innerHTML = '<li>Could mention specific monitoring/alerting tools used.</li>';
+  currentRoundScores.push(8.5);
 }
 
 /* --------------------------------------------------------------------------
@@ -1033,15 +1282,23 @@ async function enhanceSummaryWithAI() {
   const role = document.getElementById('bRoleInput').value;
   const btn = document.getElementById('btnAiEnhanceSummary');
 
-  const isRealAi = !!localStorage.getItem('RESUMIND_API_KEY');
-
-  if (isRealAi) {
+  if (isBackendOnline) {
     btn.innerText = '⚡ AI Generating...';
     try {
-      const prompt = `Write a punchy, executive 3-sentence professional resume summary for a candidate targeting a "${role}" position. Current draft: "${summaryInput.value}"`;
-      const reply = await callRealAI(prompt, "You are a professional executive resume writer.");
-      summaryInput.value = reply.trim();
-      document.getElementById('pvSummary').innerText = reply.trim();
+      const res = await fetch(`${API_BASE_URL}/api/ai/enhance-summary`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: role, current_summary: summaryInput.value })
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || 'Backend summary enhancement failed');
+      }
+
+      const data = await res.json();
+      summaryInput.value = data.enhanced_summary.trim();
+      document.getElementById('pvSummary').innerText = data.enhanced_summary.trim();
       alert('✨ Real AI successfully enhanced your professional summary!');
       return;
     } catch (e) {

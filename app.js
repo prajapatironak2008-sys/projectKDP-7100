@@ -28,7 +28,7 @@ function initBrowserIndexedDB() {
 
   request.onupgradeneeded = (e) => {
     const db = e.target.result;
-    
+
     if (!db.objectStoreNames.contains('users')) {
       const userStore = db.createObjectStore('users', { keyPath: 'email' });
       userStore.createIndex('id', 'id', { unique: false });
@@ -167,7 +167,7 @@ function initAuth() {
 function showAppPortal(show) {
   const landingView = document.getElementById('authLandingView');
   const mainPortal = document.getElementById('mainAppPortal');
-  
+
   if (show) {
     if (landingView) landingView.classList.add('hidden');
     if (mainPortal) mainPortal.classList.remove('hidden');
@@ -395,7 +395,7 @@ function updateUserUI() {
   // --------------------------------------------------------------------------
   // DYNAMIC DASHBOARD METRICS CALCULATION (OUT OF 10)
   // --------------------------------------------------------------------------
-  
+
   // 1. Avg ATS Score
   let avgAts = 0;
   if (currentUser.audits && currentUser.audits.length > 0) {
@@ -436,7 +436,7 @@ function updateUserUI() {
     });
     if (count > 0) avgInterviewScore = sum / count;
   }
-  
+
   const mockScoreTrend = document.querySelector('#dashInterviewCount + .trend');
   if (mockScoreTrend) {
     mockScoreTrend.innerHTML = `<i class="fa-solid fa-star text-amber"></i> Avg: ${avgInterviewScore.toFixed(1)}/10`;
@@ -915,10 +915,10 @@ async function runResumeAnalysis(fileName = 'Custom_Resume.pdf') {
     const score = data.ats_score || 88;
     document.getElementById('resumeRoleTag').innerText = `Target: ${data.target_role || 'Candidate'}`;
     document.getElementById('scoreValue').innerText = (score / 10).toFixed(1);
-    
+
     const dashoffset = 264 - (264 * score / 100);
     document.getElementById('scoreCircleProgress').style.strokeDashoffset = dashoffset;
-    
+
     document.getElementById('scoreHeadline').innerText = data.headline || 'AI Audit Completed!';
     document.getElementById('scoreSubhead').innerText = data.subhead || '';
 
@@ -1098,7 +1098,7 @@ function initMockInterview() {
       const overallStr = `${avg.toFixed(1)}/10`;
       const round = document.getElementById('interviewRoundSelect').value;
       const diff = document.getElementById('interviewDifficultySelect')?.value || 'Mid-Level';
-      
+
       saveUserInterviewRecord(activeRole, round, diff, overallStr);
       alert(`🎉 Mock Interview Round Completed! Overall Score: ${overallStr}`);
       switchTab('dashboard');

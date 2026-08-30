@@ -142,7 +142,7 @@ def get_user_by_email(email: str) -> Optional[Dict[str, Any]]:
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT id, name, email, target_role, created_at FROM users WHERE email = ?",
+        "SELECT id, User Name, E-mail Id, Target_Role, Created_At FROM users WHERE E-mail Id = ?",
         (email.lower().strip(),)
     )
     user = cursor.fetchone()

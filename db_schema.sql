@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
     name TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
-    target_role TEXT DEFAULT 'Software Engineer',
+    target_role TEXT DEFAULT 'Software & Hardware Engineer',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

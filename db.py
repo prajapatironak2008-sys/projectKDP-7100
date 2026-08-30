@@ -129,7 +129,7 @@ def authenticate_user(email: str, password: str) -> Optional[Dict[str, Any]]:
     cursor = conn.cursor()
     pwd_hash = hash_password(password)
     cursor.execute(
-        "SELECT id, name, email, target_role, created_at FROM users WHERE email = ? AND password_hash = ?",
+        "SELECT id, User Name, E-mail Id, Target_Role, Created_At FROM users WHERE E-mail Id = ? AND password_hash = ?",
         (email.lower().strip(), pwd_hash)
     )
     user = cursor.fetchone()

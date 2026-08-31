@@ -57,7 +57,7 @@ class InterviewSaveModel(BaseModel):
     role_focus: str
     round_type: str
     difficulty: str = "Mid-Level"
-    overall_score: str = "8.5/10"
+    overall_score: str = "0/10"
 
 @app.get("/")
 def read_root():

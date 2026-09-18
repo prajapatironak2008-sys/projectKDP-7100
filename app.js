@@ -282,7 +282,7 @@ async function loginWithCredentials(email, password) {
     if (!currentUser.interviews) currentUser.interviews = [];
     localStorage.setItem('RESUMIND_CURRENT_USER', email);
     showAppPortal(true);
-    alert(`🎉 Welcome back, ${currentUser.name}! Signed in successfully.`);
+    alert(`🎉 Welcome back, ${currentUser.name}! Loging Successful!.`);
   } else {
     // If not found, let's create a dynamic demo user session
     const namePart = email.split('@')[0];

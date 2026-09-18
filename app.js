@@ -258,11 +258,11 @@ async function loginWithCredentials(email, password) {
         }
         localStorage.setItem('RESUMIND_CURRENT_USER', email);
         showAppPortal(true);
-        alert(`🎉 Logged in successfully! Welcome, ${currentUser.name}.`);
+        alert(`🎉 Logged in successfully! Welcome Back, ${currentUser.name}.`);
         return;
       } else {
         const err = await res.json().catch(() => ({}));
-        alert(`Authentication failed: ${err.detail || 'Invalid email or password.'}`);
+        alert(`Authentication failed: ${err.detail || 'Incorrect email or password.'}`);
         if (submitBtn) {
           submitBtn.disabled = false;
           submitBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sign In to Account';

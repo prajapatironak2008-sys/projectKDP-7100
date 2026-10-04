@@ -1292,9 +1292,8 @@ body.light-theme {
   right: 12px;
   background: transparent;
   border: none;
-  color: var(--text-muted);
+  color: #ffffff;
   cursor: pointer;
-  front-size: 1rem;
 }
 
 .modal-actions {

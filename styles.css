@@ -1006,7 +1006,7 @@ body.light-theme {
   width: 100%;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--border-color);
-  color: var(--text-main);
+  color: #0b0f19;
   padding: 12px 14px;
   border-radius: var(--radius-sm);
   font-family: inherit;

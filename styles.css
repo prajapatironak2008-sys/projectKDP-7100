@@ -1294,6 +1294,7 @@ body.light-theme {
   border: none;
   color: var(--text-muted);
   cursor: pointer;
+  front-size: 1rem;
 }
 
 .modal-actions {

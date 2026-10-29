@@ -172,7 +172,7 @@ function renderUserAudits() {
         <h4>${item.name}</h4>
         <span>Target: ${item.role} • ${item.time || 'Saved'}</span>
       </div>
-      <div class="audit-score ${item.score >= 80 ? 'score-high' : 'score-mid'}">${item.score}</div>
+      <div class="audit-score ${item.score >= 80 ? 'High-Score' : 'Low-Score'}">${item.score}</div>
     </div>
   `).join('');
 }

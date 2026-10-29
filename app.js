@@ -484,7 +484,7 @@ function initApiKeySettings() {
   const savedModel = localStorage.getItem('RESUMIND_AI_MODEL');
 
   if (savedKey) document.getElementById('userApiKeyInput').value = savedKey;
-  if (savedProvider) document.getElementById('aiProviderSelect').value = savedProvider;
+  if (savedProvider) document.getElementById('AI_ProviderSelect').value = savedProvider;
   if (savedModel && modelSelect) {
     modelSelect.value = savedModel;
   }
@@ -509,8 +509,8 @@ function toggleApiKeyVisibility() {
 
 function saveApiKey() {
   const key = document.getElementById('userApiKeyInput').value.trim();
-  const provider = document.getElementById('aiProviderSelect').value;
-  const model = document.getElementById('aiModelSelect').value;
+  const provider = document.getElementById('AI_ProviderSelect').value;
+  const model = document.getElementById('AIModelSelect').value;
 
   if (!key) {
     alert('Please enter your API Key.');
@@ -926,7 +926,7 @@ function initMockInterview() {
       await generateAiQuestion();
     } else {
       alert('🎉 Mock Interview Round Completed! Reviewing your overall Ready score...');
-      switchTab('dashboard');
+      switchTab('ashboard');
     }
   });
 }

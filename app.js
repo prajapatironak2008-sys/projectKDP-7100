@@ -739,7 +739,7 @@ Return JSON ONLY matching this structure:
     let cleanJsonStr = rawReply.replace(/```json/g, '').replace(/```/g, '').trim();
     const data = JSON.parse(cleanJsonStr);
 
-    const score = data.ats_score || 88;
+    const score = data.ats_score || 80;
     document.getElementById('resumeRoleTag').innerText = `Target: ${data.target_role || 'Candidate'}`;
     document.getElementById('scoreValue').innerText = score;
 
@@ -774,7 +774,7 @@ Return JSON ONLY matching this structure:
           <p>"${b.original}"</p>
         </div>
         <div class="ai-suggestion-box">
-          <span class="label-ai"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Re-engineered (STAR Method):</span>
+          <span class="label-ai"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Re-Engineered (STAR Method):</span>
           <p class="highlight-text">"${b.improved}"</p>
           <button class="btn btn-secondary btn-xs" onclick="copyText(this)">Copy Rewritten Bullet</button>
         </div>
@@ -925,7 +925,7 @@ function initMockInterview() {
       document.getElementById('candidateAnswerText').value = '';
       await generateAiQuestion();
     } else {
-      alert('🎉 Mock Interview Round Completed! Reviewing your overall readiness score...');
+      alert('🎉 Mock Interview Round Completed! Reviewing your overall Ready score...');
       switchTab('dashboard');
     }
   });

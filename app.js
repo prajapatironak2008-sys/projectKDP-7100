@@ -726,8 +726,8 @@ Return JSON ONLY matching this structure:
   "detected_skills": ["Skill 1", "Skill 2", "Skill 3"],
   "missing_keywords": ["Missing 1", "Missing 2"],
   "check_items": [
-    {"type": "pass", "title": "Check Title", "desc": "Check Description"},
-    {"type": "warn", "title": "Check Title", "desc": "Check Description"}
+    {"type": "Pass", "title": "Check Title", "desc": "Check Description"},
+    {"type": "Fail", "title": "Check Title", "desc": "Check Description"}
   ],
   "bullet_enhancements": [
     {"original": "Original bullet", "improved": "Rewritten bullet using STAR method"}
